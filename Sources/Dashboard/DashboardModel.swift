@@ -20,6 +20,11 @@ public final class DashboardModel {
     public var repos: [RepoEntry] = []
     public var currentRepoPath: String?
     public var discovering = false
+    public var providers: DashboardProviders = .none
+    public var showClone = false
+    /// Fichiers du commit sélectionné, chargés à la demande (clé : hash complet).
+    public var commitFiles: [String: [CommitFileEntry]] = [:]
+    public var commitFilesError: String?
 
     public enum BuildState: Equatable, Sendable {
         case idle
@@ -30,6 +35,7 @@ public final class DashboardModel {
     public init() {}
 
     public func replace(snapshot: Snapshot?, analytics: Analytics?) {
+        if snapshot?.meta.repoPath != self.snapshot?.meta.repoPath { commitFiles.removeAll() }
         self.snapshot = snapshot
         self.analytics = analytics
         if let selectedCommit, let snapshot, selectedCommit >= snapshot.commits.count { self.selectedCommit = nil }
@@ -53,5 +59,36 @@ public final class DashboardModel {
             }
         }
         return out
+    }
+}
+
+extension DashboardModel {
+    /// Charge les fichiers du commit `index` si ce n'est pas déjà fait.
+    public func loadCommitFiles(_ index: Int) async {
+        guard let s = snapshot, index < s.commits.count else { return }
+        let hash = s.commits.fullHash(index)
+        if commitFiles[hash] != nil { return }
+        let repo = s.meta.repoPath
+        let provider = providers.commitFiles
+        do {
+            let files = try await provider(repo, hash)
+            if commitFiles.count > 200 { commitFiles.removeAll() }
+            commitFiles[hash] = files
+            commitFilesError = nil
+        } catch {
+            commitFilesError = "\(error)"
+        }
+    }
+
+    /// Déplace la sélection dans la liste visible.
+    public func moveSelection(by delta: Int) {
+        guard let s = snapshot, s.commits.count > 0 else { return }
+        let rows = filteredIndices ?? Array(0..<s.commits.count)
+        guard !rows.isEmpty else { return }
+        if let sel = selectedCommit, let pos = rows.firstIndex(of: sel) {
+            selectedCommit = rows[max(0, min(rows.count - 1, pos + delta))]
+        } else {
+            selectedCommit = delta >= 0 ? rows[0] : rows[rows.count - 1]
+        }
     }
 }

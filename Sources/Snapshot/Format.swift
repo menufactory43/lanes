@@ -4,7 +4,7 @@ import Foundation
 /// un snapshot d'une autre version est simplement reconstruit.
 public enum Format {
     public static let magic: [UInt8] = Array("LANESNAP".utf8)
-    public static let version: UInt32 = 1
+    public static let version: UInt32 = 2
     public static let headerSize = 24
     public static let tocEntrySize = 24
     public static let alignment = 8
@@ -83,7 +83,7 @@ public enum Layout {
         public static let commit = 16  // u32
     }
     public enum Health {
-        public static let stride = 48
+        public static let stride = 64
         public static let sizeBytes = 0        // u64
         public static let looseObjects = 8     // u32
         public static let packs = 12           // u32
@@ -95,6 +95,9 @@ public enum Layout {
         public static let localBranches = 36   // u32
         public static let remoteBranches = 40  // u32
         public static let tags = 44            // u32
+        public static let ahead = 48           // u32 (0xFFFFFFFF = pas d'upstream)
+        public static let behind = 52          // u32
+        public static let stashes = 56         // u32
     }
     public enum Status {
         public static let stride = 8

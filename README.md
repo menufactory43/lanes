@@ -21,7 +21,13 @@ rebond, y compris sur un dépôt de 85 000 commits.
 - L'activité sur 53 semaines, les auteurs et leur rivière mensuelle, les fichiers
   chauds, où le code vit et qui le possède, l'horloge du code.
 
-Le filtre (`/` dans l'en-tête) cherche dans les messages, auteurs et hashes.
+- Les fichiers du commit sélectionné, avec lignes ajoutées et supprimées.
+- Ahead/behind par rapport à l'upstream et le nombre de stashes, dans l'en-tête.
+- Cloner (⌘⇧O) : URL, `owner/repo`, ou mots-clés cherchés sur GitHub.
+- Ouvrir le dépôt dans le Finder, le Terminal ou ton éditeur.
+
+Le filtre (⌘F) cherche dans les messages, auteurs et hashes. ↑ ↓ déplacent la
+sélection dans le graphe, ⎋ la retire.
 
 ## Comment c'est rapide
 

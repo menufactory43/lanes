@@ -12,11 +12,13 @@ public struct RootView: View {
     @Bindable var model: DashboardModel
     let onOpen: () -> Void
     let onSelectRepo: (String) -> Void
+    let onForgetRepo: (String) -> Void
 
-    public init(model: DashboardModel, onOpen: @escaping () -> Void, onSelectRepo: @escaping (String) -> Void) {
+    public init(model: DashboardModel, onOpen: @escaping () -> Void, onSelectRepo: @escaping (String) -> Void, onForgetRepo: @escaping (String) -> Void = { _ in }) {
         self.model = model
         self.onOpen = onOpen
         self.onSelectRepo = onSelectRepo
+        self.onForgetRepo = onForgetRepo
     }
 
     public var body: some View {
@@ -25,33 +27,35 @@ public struct RootView: View {
             if let s = model.snapshot {
                 dashboard(s)
             } else {
-                HStack(alignment: .top, spacing: 10) {
-                    if !model.repos.isEmpty {
-                        ReposWidget(repos: model.repos, current: model.currentRepoPath, discovering: model.discovering, onSelect: onSelectRepo, onOpen: onOpen)
-                            .frame(width: 330).padding(12)
-                    }
-                    EmptyRepoView(state: model.building, onOpen: onOpen)
-                }
+                BuildingView(model: model, onOpen: onOpen, onSelectRepo: onSelectRepo, onClone: { model.showClone = true })
             }
         }
         .font(t.font)
+        .sheet(isPresented: $model.showClone) {
+            CloneSheet(providers: model.providers) { path in
+                model.showClone = false
+                if let path { onSelectRepo(path) }
+            }
+            .glyphTheme(t)
+        }
     }
 
     @ViewBuilder
     private func dashboard(_ s: Snapshot) -> some View {
         let a = model.analytics
         VStack(spacing: 0) {
-            HeaderBar(snapshot: s, analytics: a, filter: $model.filter, building: model.building, onOpen: onOpen)
+            HeaderBar(snapshot: s, analytics: a, filter: $model.filter, building: model.building, onOpen: onOpen, onClone: { model.showClone = true })
             Rectangle().fill(t.faint).frame(height: 1)
             StatsRow(snapshot: s, analytics: a).padding(.horizontal, 16).padding(.vertical, 12)
             HStack(alignment: .top, spacing: 10) {
                 ScrollView(.vertical) {
                     VStack(spacing: 10) {
-                        ReposWidget(repos: model.repos, current: model.currentRepoPath, discovering: model.discovering, onSelect: onSelectRepo, onOpen: onOpen)
+                        ReposWidget(repos: model.repos, current: model.currentRepoPath, discovering: model.discovering, onSelect: onSelectRepo, onOpen: onOpen,
+                                    providers: model.providers, onForget: { path in model.repos.removeAll { $0.path == path }; onForgetRepo(path) })
                         if let a { SinceVisitWidget(since: a.sinceLastVisit, snapshot: s, selection: $model.selectedCommit) }
                         WorkingTreeWidget(snapshot: s)
                         if let sel = model.selectedCommit, sel < s.commits.count {
-                            CommitDetailWidget(snapshot: s, index: sel, refs: a?.refsByCommit[sel] ?? [])
+                            CommitDetailWidget(snapshot: s, index: sel, refs: a?.refsByCommit[sel] ?? [], model: model)
                         }
                         if let a { HealthWidget(snapshot: s, analytics: a) }
                     }
@@ -60,7 +64,8 @@ public struct RootView: View {
                 .scrollIndicators(.never)
 
                 VStack(spacing: 0) {
-                    CommitGraphView(snapshot: s, refsByCommit: a?.refsByCommit ?? [:], indices: model.filteredIndices, selection: $model.selectedCommit)
+                    CommitGraphView(snapshot: s, refsByCommit: a?.refsByCommit ?? [:], indices: model.filteredIndices, selection: $model.selectedCommit,
+                                    onMove: { model.moveSelection(by: $0) })
                 }
                 .overlay(RoundedRectangle(cornerRadius: 0).stroke(t.rule, style: StrokeStyle(lineWidth: 1, dash: [3, 3])))
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -80,6 +85,76 @@ public struct RootView: View {
                 }
                 .frame(width: 330)
                 .scrollIndicators(.never)
+            }
+            .padding(.horizontal, 12).padding(.bottom, 12)
+        }
+    }
+}
+
+/// Premier lancement sur un dépôt (ou aucun dépôt) : la même structure que le
+/// tableau de bord, avec la progression au centre. Pas d'écran vide.
+struct BuildingView: View {
+    @Environment(\.glyph) private var t
+    let model: DashboardModel
+    let onOpen: () -> Void
+    let onSelectRepo: (String) -> Void
+    let onClone: () -> Void
+
+    var body: some View {
+        let name = model.currentRepoPath.map { URL(fileURLWithPath: $0).lastPathComponent }
+        VStack(spacing: 0) {
+            HStack(alignment: .firstTextBaseline, spacing: 18) {
+                Text(name ?? "Lanes").font(.system(size: t.fontSize * 1.5, weight: .semibold, design: .monospaced)).foregroundStyle(t.ink)
+                if case .building(let stage, let detail) = model.building {
+                    HStack(spacing: 6) { ProgressView().controlSize(.small); Text(detail.isEmpty ? stage : "\(stage) · \(detail)").font(t.smallFont).foregroundStyle(t.muted) }
+                }
+                Spacer()
+                Button("ouvrir…", action: onOpen).buttonStyle(.plain).font(t.font).foregroundStyle(t.accent).keyboardShortcut("o", modifiers: .command)
+                Button("cloner…", action: onClone).buttonStyle(.plain).font(t.font).foregroundStyle(t.accent).keyboardShortcut("o", modifiers: [.command, .shift])
+            }
+            .padding(.horizontal, 16).padding(.vertical, 10)
+            Rectangle().fill(t.faint).frame(height: 1)
+            HStack(alignment: .top, spacing: 0) {
+                ForEach(["commits", "auteurs", "branches", "fichiers", "travail", "série"], id: \.self) { l in
+                    Stat(l, "—"); Spacer()
+                }
+            }.padding(.horizontal, 16).padding(.vertical, 12)
+            HStack(alignment: .top, spacing: 10) {
+                VStack(spacing: 10) {
+                    ReposWidget(repos: model.repos, current: model.currentRepoPath, discovering: model.discovering, onSelect: onSelectRepo, onOpen: onOpen, providers: model.providers)
+                    Frame("depuis ta dernière visite") { Text("…").foregroundStyle(t.faint) }
+                    Frame("arbre de travail") { Text("…").foregroundStyle(t.faint) }
+                }.frame(width: 330)
+                VStack(spacing: 14) {
+                    Spacer()
+                    switch model.building {
+                    case .building(let stage, let detail):
+                        Text("LANES").font(.system(size: 28, weight: .semibold, design: .monospaced)).tracking(6).foregroundStyle(t.ink)
+                        Text("première ouverture de \(name ?? "ce dépôt") : construction du snapshot").foregroundStyle(t.muted)
+                        HStack(spacing: 8) { ProgressView().controlSize(.small); Text(detail.isEmpty ? stage : "\(stage) · \(detail)").foregroundStyle(t.ink) }
+                        Text("les prochaines ouvertures seront instantanées").font(t.smallFont).foregroundStyle(t.faint)
+                    case .failed(let msg):
+                        Text("LANES").font(.system(size: 28, weight: .semibold, design: .monospaced)).tracking(6).foregroundStyle(t.ink)
+                        Text(msg).foregroundStyle(.red).multilineTextAlignment(.center).frame(maxWidth: 480)
+                        Button("ouvrir un autre dépôt…", action: onOpen).buttonStyle(.plain).foregroundStyle(t.accent)
+                    case .idle:
+                        Text("LANES").font(.system(size: 28, weight: .semibold, design: .monospaced)).tracking(6).foregroundStyle(t.ink)
+                        Text("tableau de bord git · lecture seule").foregroundStyle(t.muted)
+                        HStack(spacing: 18) {
+                            Button("ouvrir un dépôt…  ⌘O", action: onOpen).buttonStyle(.plain).foregroundStyle(t.accent)
+                            Button("cloner…  ⌘⇧O", action: onClone).buttonStyle(.plain).foregroundStyle(t.accent)
+                        }
+                        Text("ou glisse un dossier ici, ou choisis un dépôt à gauche").font(t.smallFont).foregroundStyle(t.muted)
+                    }
+                    Spacer()
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .overlay(Rectangle().stroke(t.rule, style: StrokeStyle(lineWidth: 1, dash: [3, 3])))
+                VStack(spacing: 10) {
+                    ForEach(["activité · 53 semaines", "auteurs", "fichiers chauds · 90 jours", "où le code vit · propriété", "horloge du code"], id: \.self) { f in
+                        Frame(f) { Text("…").foregroundStyle(t.faint) }
+                    }
+                }.frame(width: 330)
             }
             .padding(.horizontal, 12).padding(.bottom, 12)
         }

@@ -2,6 +2,7 @@ import SwiftUI
 import Snapshot
 import Analytics
 import Glyph
+import AppKit
 
 struct HeaderBar: View {
     @Environment(\.glyph) private var t
@@ -10,12 +11,26 @@ struct HeaderBar: View {
     @Binding var filter: String
     let building: DashboardModel.BuildState
     let onOpen: () -> Void
+    var onClone: () -> Void = {}
+    @FocusState private var filterFocused: Bool
 
     var body: some View {
+        let h = snapshot.health
         HStack(alignment: .firstTextBaseline, spacing: 18) {
             HStack(spacing: 8) {
                 Text(snapshot.meta.repoName).font(.system(size: t.fontSize * 1.5, weight: .semibold, design: .monospaced)).foregroundStyle(t.ink)
                 Tag(snapshot.meta.head, color: t.accent, filled: true)
+                if let ab = h.aheadBehind {
+                    Text("↑\(ab.ahead) ↓\(ab.behind)")
+                        .font(t.smallFont).monospacedDigit()
+                        .foregroundStyle(ab.ahead + ab.behind == 0 ? t.muted : t.accent)
+                        .help("\(ab.ahead) commit(s) à pousser, \(ab.behind) à tirer")
+                } else {
+                    Text("sans upstream").font(t.smallFont).foregroundStyle(t.faint)
+                }
+                if h.stashes > 0 {
+                    Text("\(h.stashes) stash\(h.stashes > 1 ? "es" : "")").font(t.smallFont).foregroundStyle(t.accent2)
+                }
             }
             Text(snapshot.meta.repoPath.replacingOccurrences(of: NSHomeDirectory(), with: "~"))
                 .font(t.smallFont).foregroundStyle(t.muted).lineLimit(1).truncationMode(.middle)
@@ -35,13 +50,17 @@ struct HeaderBar: View {
                 Text("/").foregroundStyle(t.muted)
                 TextField("filtrer message, auteur, hash", text: $filter)
                     .textFieldStyle(.plain)
+                    .focused($filterFocused)
                     .frame(width: t.cell.width * 30)
             }
+            .onReceive(NotificationCenter.default.publisher(for: Notification.Name("app.lanes.focusFilter"))) { _ in filterFocused = true }
             .font(t.font)
             .padding(.horizontal, 6).padding(.vertical, 3)
             .overlay(RoundedRectangle(cornerRadius: 3).stroke(t.rule, style: StrokeStyle(lineWidth: 1, dash: [3, 3])))
             Button("ouvrir…", action: onOpen).buttonStyle(.plain).font(t.font).foregroundStyle(t.accent)
                 .keyboardShortcut("o", modifiers: .command)
+            Button("cloner…", action: onClone).buttonStyle(.plain).font(t.font).foregroundStyle(t.accent)
+                .keyboardShortcut("o", modifiers: [.command, .shift])
         }
         .padding(.horizontal, 16).padding(.vertical, 10)
     }
@@ -318,20 +337,80 @@ struct CommitDetailWidget: View {
     let snapshot: Snapshot
     let index: Int
     let refs: [RefLabel]
+    let model: DashboardModel
 
     var body: some View {
+        let hash = snapshot.commits.fullHash(index)
+        let files = model.commitFiles[hash]
         Frame("commit", trailing: snapshot.commits.shortHash(index)) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(snapshot.message(index)).foregroundStyle(t.ink).lineLimit(3)
                 Leader("auteur", snapshot.authors.name(snapshot.commits.author(index)))
                 Leader("date", Tabular.dateTime(snapshot.commits.date(index)))
                 Leader("parents", "\(snapshot.commits.parentCount(index))")
-                Text(snapshot.commits.fullHash(index)).font(t.smallFont).foregroundStyle(t.muted).textSelection(.enabled)
+                Text(hash).font(t.smallFont).foregroundStyle(t.muted).textSelection(.enabled)
                 if !refs.isEmpty {
                     HStack(spacing: 4) { ForEach(refs.prefix(6), id: \.self) { Tag($0.name, color: $0.kind == .tag ? t.accent2 : t.accent, filled: $0.isHead) } }
                 }
+                Rule()
+                if let files {
+                    let added = files.reduce(0) { $0 + max(0, $1.added) }, deleted = files.reduce(0) { $0 + max(0, $1.deleted) }
+                    HStack(spacing: 6) {
+                        Text("\(files.count) fichier\(files.count > 1 ? "s" : "")").font(t.smallFont).tracking(1).foregroundStyle(t.muted)
+                        Spacer()
+                        Text("+\(added)").font(t.smallFont).foregroundStyle(Color(red: 0.62, green: 0.78, blue: 0.48))
+                        Text("−\(deleted)").font(t.smallFont).foregroundStyle(Color(red: 0.85, green: 0.52, blue: 0.56))
+                    }
+                    let mx = max(1, files.map { max(0, $0.added) + max(0, $0.deleted) }.max() ?? 1)
+                    ForEach(files.prefix(14)) { f in
+                        HStack(spacing: 6) {
+                            Text(String(f.status)).font(t.smallFont).foregroundStyle(statusColor(f.status)).frame(width: t.cell.width)
+                            Text(f.path).foregroundStyle(t.ink).lineLimit(1).truncationMode(.middle)
+                            Spacer(minLength: 4)
+                            if f.isBinary {
+                                Text("bin").font(t.smallFont).foregroundStyle(t.muted)
+                            } else {
+                                DiffBar(added: f.added, deleted: f.deleted, max: mx)
+                                Text("\(f.added + f.deleted)").font(t.smallFont).foregroundStyle(t.muted).monospacedDigit().frame(width: t.cell.width * 4, alignment: .trailing)
+                            }
+                        }
+                    }
+                    if files.count > 14 { Text("… \(files.count - 14) de plus").font(t.smallFont).foregroundStyle(t.muted) }
+                    if files.isEmpty { Text("aucun fichier (commit vide ou fusion sans changement)").foregroundStyle(t.muted) }
+                } else if let err = model.commitFilesError {
+                    Text(err).font(t.smallFont).foregroundStyle(.red).lineLimit(2)
+                } else {
+                    Text("…").foregroundStyle(t.muted)
+                }
             }
         }
+        .task(id: hash) { await model.loadCommitFiles(index) }
+    }
+
+    func statusColor(_ c: Character) -> Color {
+        switch c {
+        case "A": return Color(red: 0.62, green: 0.78, blue: 0.48)
+        case "D": return Color(red: 0.85, green: 0.52, blue: 0.56)
+        case "R", "C": return t.accent2
+        default: return t.accent
+        }
+    }
+}
+
+/// Barre +/− proportionnelle, 6 cellules.
+struct DiffBar: View {
+    @Environment(\.glyph) private var t
+    let added: Int, deleted: Int, max: Int
+    var body: some View {
+        let cells = 6
+        let a = Int((Double(added) / Double(max) * Double(cells)).rounded(.up))
+        let d = Int((Double(deleted) / Double(max) * Double(cells)).rounded(.up))
+        HStack(spacing: 0) {
+            Text(String(repeating: "█", count: Swift.min(cells, a))).foregroundStyle(Color(red: 0.62, green: 0.78, blue: 0.48))
+            Text(String(repeating: "█", count: Swift.min(cells - Swift.min(cells, a), d))).foregroundStyle(Color(red: 0.85, green: 0.52, blue: 0.56))
+            Text(String(repeating: "░", count: Swift.max(0, cells - Swift.min(cells, a) - Swift.min(cells - Swift.min(cells, a), d)))).foregroundStyle(t.faint)
+        }
+        .font(t.smallFont)
     }
 }
 
@@ -342,6 +421,8 @@ struct ReposWidget: View {
     let discovering: Bool
     let onSelect: (String) -> Void
     let onOpen: () -> Void
+    var providers: DashboardProviders = .none
+    var onForget: (String) -> Void = { _ in }
     @AppStorage("reposCollapsed") private var collapsed = false
 
     var body: some View {
@@ -399,6 +480,14 @@ struct ReposWidget: View {
                     .buttonStyle(.plain)
                     .accessibilityLabel("\(r.name), \(r.head ?? ""), \(r.commits.map { "\($0) commits" } ?? "")")
                     .help(r.path)
+                    .contextMenu {
+                        Button("Ouvrir dans le Finder") { providers.openInFinder(r.path) }
+                        Button("Ouvrir dans le Terminal") { providers.openInTerminal(r.path) }
+                        ForEach(providers.editors) { e in Button("Ouvrir dans \(e.name)") { providers.openInEditor(r.path, e) } }
+                        Divider()
+                        Button("Copier le chemin") { NSPasteboard.general.clearContents(); NSPasteboard.general.setString(r.path, forType: .string) }
+                        Button("Retirer de la liste") { onForget(r.path) }
+                    }
                 }
     }
 }

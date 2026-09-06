@@ -28,6 +28,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
         LaunchMetrics.note("snapshot ouvert (\(hadSnapshot))")
         // 3. Fenêtre.
+        model.providers = AppProviders.make(window: { [weak self] in self?.window })
         buildMenu()
         let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1400, height: 880),
                          styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
@@ -46,7 +47,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         coordinator.refreshRepoList()
         let root = ContentHost(model: model, onOpen: { [weak self] in self?.openPanel() },
                                onDrop: { [weak self] path in self?.coordinator.open(path: path) },
-                               onSelectRepo: { [weak self] path in self?.coordinator.open(path: path) })
+                               onSelectRepo: { [weak self] path in self?.coordinator.open(path: path) },
+                               onForgetRepo: { path in
+                                   Preferences.forgetRecent(path)
+                                   Preferences.discovered = Preferences.discovered.filter { $0 != path }
+                               })
         LaunchMetrics.note("fenêtre créée")
         let hosting = NSHostingView(rootView: root)
         hosting.sizingOptions = []
@@ -89,6 +94,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 }
             }
             coordinator.discoverAndPrebuild()
+            if ProcessInfo.processInfo.environment["LANES_TEST_SHEET"] == "1" { model.showClone = true }
             if LaunchMetrics.isMeasuring {
                 FileHandle.standardError.write(Data((LaunchMetrics.report() + "\n").utf8))
                 if ProcessInfo.processInfo.environment["LANES_AUTOQUIT"] == "1" {
@@ -126,6 +132,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let fileItem = NSMenuItem(); main.addItem(fileItem)
         let file = NSMenu(title: "Fichier")
         file.addItem(withTitle: "Ouvrir un dépôt…", action: #selector(openPanelAction), keyEquivalent: "o")
+        let cloneItem = NSMenuItem(title: "Cloner un dépôt…", action: #selector(cloneAction), keyEquivalent: "O")
+        cloneItem.keyEquivalentModifierMask = [.command, .shift]
+        file.addItem(cloneItem)
         let recentItem = NSMenuItem(title: "Dépôts récents", action: nil, keyEquivalent: "")
         let recent = NSMenu(title: "Dépôts récents")
         for path in Preferences.recents {
@@ -148,6 +157,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         goItem.submenu = go
         file.addItem(goItem)
         file.addItem(withTitle: "Chercher les dépôts de ce Mac", action: #selector(rediscover), keyEquivalent: "")
+        file.addItem(.separator())
+        file.addItem(withTitle: "Ouvrir dans le Finder", action: #selector(revealInFinder), keyEquivalent: "R")
+        file.addItem(withTitle: "Ouvrir dans le Terminal", action: #selector(openTerminal), keyEquivalent: "T")
+        for (i, e) in model.providers.editors.enumerated() {
+            let item = NSMenuItem(title: "Ouvrir dans \(e.name)", action: #selector(openEditor(_:)), keyEquivalent: i == 0 ? "E" : "")
+            item.tag = i
+            file.addItem(item)
+        }
         file.addItem(.separator())
         file.addItem(withTitle: "Reconstruire le snapshot", action: #selector(rebuild), keyEquivalent: "r")
         file.addItem(.separator())
@@ -186,6 +203,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     @objc private func openPanelAction() { openPanel() }
+    @objc private func cloneAction() { model.showClone = true }
+    @objc private func revealInFinder() { if let p = model.currentRepoPath { model.providers.openInFinder(p) } }
+    @objc private func openTerminal() { if let p = model.currentRepoPath { model.providers.openInTerminal(p) } }
+    @objc private func openEditor(_ sender: NSMenuItem) {
+        guard let p = model.currentRepoPath, sender.tag < model.providers.editors.count else { return }
+        model.providers.openInEditor(p, model.providers.editors[sender.tag])
+    }
     @objc private func nextRepo() { coordinator.cycle(+1) }
     @objc private func previousRepo() { coordinator.cycle(-1) }
     @objc private func selectRepoNumber(_ sender: NSMenuItem) {
@@ -231,10 +255,11 @@ struct ContentHost: View {
     let onOpen: () -> Void
     let onDrop: (String) -> Void
     let onSelectRepo: (String) -> Void
+    let onForgetRepo: (String) -> Void
     @State private var targeted = false
 
     var body: some View {
-        RootView(model: model, onOpen: onOpen, onSelectRepo: onSelectRepo)
+        RootView(model: model, onOpen: onOpen, onSelectRepo: onSelectRepo, onForgetRepo: onForgetRepo)
             .glyphTheme(.default)
             .onDrop(of: [UTType.fileURL], isTargeted: $targeted) { providers in
                 guard let p = providers.first else { return false }

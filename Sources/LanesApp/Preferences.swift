@@ -12,6 +12,11 @@ enum Preferences {
     private static let discoveredKey = "discoveredRepos"
     private static let discoveredAtKey = "discoveredAt"
 
+    static var cloneDirectory: URL {
+        get { d.string(forKey: "cloneDirectory").map { URL(fileURLWithPath: $0) } ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Developer") }
+        set { d.set(newValue.path, forKey: "cloneDirectory") }
+    }
+
     static var discovered: [String] {
         get { d.stringArray(forKey: discoveredKey) ?? [] }
         set { d.set(newValue, forKey: discoveredKey); d.set(Date().timeIntervalSince1970, forKey: discoveredAtKey) }

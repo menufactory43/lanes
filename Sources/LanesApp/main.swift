@@ -12,6 +12,11 @@ if let i = arguments.firstIndex(of: "--build"), i + 1 < arguments.count {
     exit(CommandLineBuild.run(path: arguments[i + 1]))
 }
 
+if let i = arguments.firstIndex(of: "--search"), i + 1 < arguments.count {
+    // Mode ligne de commande : recherche GitHub, pour diagnostiquer sans interface.
+    exit(CommandLineBuild.search(query: arguments[i + 1]))
+}
+
 let app = NSApplication.shared
 let delegate = AppDelegate()
 app.delegate = delegate

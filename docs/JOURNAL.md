@@ -80,6 +80,29 @@
   masqué ne reçoit pas son raccourci : leçon apprise, sous-menu visible.
 - Preuve : ⌘2 depuis lifequest ouvre git/git (85 557 commits) sans délai perceptible.
 
+### M9 Six demandes (fichiers du commit, clonage, ahead/behind, clavier, ouvrir dans…, premier lancement)
+- Format snapshot v2 : `ahead`, `behind`, `stashes` dans la section santé.
+  Les snapshots v1 sont reconstruits automatiquement (version dans l'en-tête).
+- `CommitInspector` : `git show --first-parent --numstat/--name-status` à la
+  demande, cache par hash dans le modèle. Piège trouvé par le test : sans
+  `--first-parent`, un commit de fusion produit un diff combiné vide.
+- `Cloner` : `git clone --progress` via `posix_spawn` en flux (stderr livré
+  par morceaux) ; `normalize` accepte URL, `owner/repo`, `github.com/…`,
+  `git@…`, `origin.cursor.com/…`. Testé par un vrai clone local `file://`.
+- `GitHubSearch` : API de recherche anonyme, 8 résultats triés par étoiles,
+  délai de frappe 450 ms, message clair à la limite de débit. Vérifié en ligne
+  via `Lanes --search "swift nio"`.
+- Contrat `DashboardProviders` : le dashboard ne dépend toujours pas de
+  GitExtract ni du réseau ; l'app injecte les implémentations (ADR-9).
+- Clavier : ↑ ↓ déplacent la sélection (liste filtrée comprise), ⏎ centre,
+  ⎋ désélectionne, ⌘F focalise le filtre.
+- « Ouvrir dans le Finder / Terminal / éditeur » : menu contextuel du cadre
+  dépôts et menu Fichier (⌘⇧R, ⌘⇧T, ⌘⇧E). Terminal : Ghostty, iTerm, Warp
+  puis Terminal ; éditeurs détectés : Cursor, VS Code, Zed, Sublime, Nova, Xcode.
+- Premier lancement : `BuildingView` reprend la structure du tableau de bord
+  (cadres en squelette, liste des dépôts active) avec la progression au centre.
+- Chemin de lancement inchangé : aucun réseau, aucun `git` avant la première frame.
+
 ### Limites connues
 - Le premier lancement sur un dépôt construit le snapshot : l'utilisateur voit
   la progression, pas le tableau de bord. Le « woaw » commence au second.

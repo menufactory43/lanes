@@ -276,6 +276,13 @@ public struct HealthView: @unchecked Sendable {
     public var localBranches: Int { u32(Layout.Health.localBranches) }
     public var remoteBranches: Int { u32(Layout.Health.remoteBranches) }
     public var tags: Int { u32(Layout.Health.tags) }
+    /// nil si la branche n'a pas d'upstream.
+    public var aheadBehind: (ahead: Int, behind: Int)? {
+        guard r.count > 0 else { return nil }
+        let a = r.u32(0, Layout.Health.ahead)
+        return a == noIndex ? nil : (Int(a), Int(r.u32(0, Layout.Health.behind)))
+    }
+    public var stashes: Int { u32(Layout.Health.stashes) }
 }
 
 public struct StatusView: @unchecked Sendable {

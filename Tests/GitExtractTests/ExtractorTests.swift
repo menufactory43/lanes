@@ -122,7 +122,9 @@ final class StageBox: @unchecked Sendable {
         #expect(s.health.trackedFiles == 3)
         #expect(s.health.localBranches == 3)
         #expect(s.health.tags == 1)
-        #expect(s.health.staleBranches == 2) // feature et old-branch datent de 2024, main vient d'être fusionnée
+        #expect(s.health.staleBranches == 2)
+        #expect(s.health.aheadBehind == nil)   // pas d'upstream
+        #expect(s.health.stashes == 0) // feature et old-branch datent de 2024, main vient d'être fusionnée
         let statusPaths = (0..<s.status.count).map { s.status.path($0) }
         #expect(statusPaths.contains("src/app.swift") && statusPaths.contains("notes.txt"))
 
@@ -142,4 +144,52 @@ final class StageBox: @unchecked Sendable {
         try FileManager.default.removeItem(at: dir.appendingPathComponent("another.txt"))
         #expect(Fingerprint.compute(repo: info) == a)
     }
+}
+
+@Suite struct InspectorAndClonerTests {
+    @Test func normalizesCloneInputs() {
+        #expect(Cloner.normalize("git/git") == "https://github.com/git/git")
+        #expect(Cloner.normalize("https://github.com/git/git.git") == "https://github.com/git/git.git")
+        #expect(Cloner.normalize("github.com/apple/swift") == "https://github.com/apple/swift")
+        #expect(Cloner.normalize("git@github.com:apple/swift.git") == "git@github.com:apple/swift.git")
+        #expect(Cloner.normalize("origin.cursor.com/team/repo") == "https://origin.cursor.com/team/repo")
+        #expect(Cloner.normalize("swift compiler") == nil)
+        #expect(Cloner.normalize("") == nil)
+        #expect(Cloner.repoName(from: "https://github.com/git/git.git") == "git")
+        #expect(Cloner.repoName(from: "git@github.com:apple/swift.git/") == "swift")
+    }
+
+    @Test func inspectsCommitFilesAndClonesLocally() throws {
+        let t = try ExtractorTests()
+        defer { try? FileManager.default.removeItem(at: t.dir) }
+        let info = try RepoInfo.locate(t.dir.path)
+        let head = try GitRunner(repoPath: info.topLevel).string(["rev-parse", "HEAD~1"]) // "bump app"
+        let files = try CommitInspector.files(repoPath: info.topLevel, hash: head)
+        #expect(files.count == 1)
+        #expect(files.first?.path == "src/app.swift")
+        #expect(files.first?.added == 1 && files.first?.deleted == 1)
+        #expect(files.first?.status == "M")
+
+        let merge = try GitRunner(repoPath: info.topLevel).string(["rev-parse", "HEAD"])
+        let mergeFiles = try CommitInspector.files(repoPath: info.topLevel, hash: merge)
+        #expect(mergeFiles.map(\.path) == ["src/feature.swift"])
+        #expect(mergeFiles.first?.status == "A")
+
+        let dest = FileManager.default.temporaryDirectory.appendingPathComponent("lanes-clone-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: dest) }
+        let box = StageBox()
+        let lines = LineBox()
+        let path = try Cloner.clone(url: "file://" + info.topLevel, into: dest) { lines.add($0) }
+        _ = box
+        #expect(path.hasSuffix(t.dir.lastPathComponent))
+        #expect(FileManager.default.fileExists(atPath: path + "/.git"))
+        let cloned = try RepoInfo.locate(path)
+        #expect(try GitRunner(repoPath: cloned.topLevel).string(["rev-parse", "HEAD"]) == merge)
+        #expect(throws: GitError.self) { try Cloner.clone(url: "file://" + info.topLevel, into: dest) { _ in } } // existe déjà
+    }
+}
+
+final class LineBox: @unchecked Sendable {
+    private let lock = NSLock(); private var lines: [String] = []
+    func add(_ s: String) { lock.lock(); lines.append(s); lock.unlock() }
 }

@@ -11,6 +11,8 @@ struct CommitGraphView: View {
     let refsByCommit: [Int: [RefLabel]]
     let indices: [Int]?
     @Binding var selection: Int?
+    var onMove: (Int) -> Void = { _ in }
+    @FocusState private var focused: Bool
 
     private var laneWidth: CGFloat { t.cell.width * 1.6 }
     private var maxLaneShown: Int { 12 }
@@ -40,10 +42,20 @@ struct CommitGraphView: View {
             .scrollContentBackground(.hidden)
             .environment(\.defaultMinListRowHeight, t.cell.height)
             .onChange(of: selection) { _, new in
-                guard let new, indices == nil else { return }
-                // Ne défile que si la sélection vient d'ailleurs (cadre « depuis ta dernière visite »).
-                withAnimation(nil) { proxy.scrollTo(new, anchor: .center) }
+                guard let new else { return }
+                withAnimation(nil) { proxy.scrollTo(new, anchor: nil) }
             }
+            .focusable()
+            .focused($focused)
+            .focusEffectDisabled()
+            .onKeyPress(.upArrow) { onMove(-1); return .handled }
+            .onKeyPress(.downArrow) { onMove(1); return .handled }
+            .onKeyPress(.escape) { selection = nil; return .handled }
+            .onKeyPress(.return) {
+                if let sel = selection { withAnimation(nil) { proxy.scrollTo(sel, anchor: .center) } }
+                return .handled
+            }
+            .onTapGesture { focused = true }
         }
         .accessibilityLabel("Graphe des commits, \(count) lignes")
     }

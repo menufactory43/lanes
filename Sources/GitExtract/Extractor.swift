@@ -246,6 +246,12 @@ public struct Extractor: Sendable {
             }
         }
 
+        var ahead = noIndex, behind: UInt32 = 0
+        let lr = try git.string(["rev-list", "--left-right", "--count", "HEAD...@{upstream}"], allowFailure: true)
+        let lrParts = lr.split(whereSeparator: { $0 == "\t" || $0 == " " })
+        if lrParts.count == 2, let a = UInt32(lrParts[0]), let b = UInt32(lrParts[1]) { ahead = a; behind = b }
+        let stashes = (try git.string(["stash", "list"], allowFailure: true)).split(separator: "\n").count
+
         // 7. Voies --------------------------------------------------------------
         report(.layout)
         let parentIdx: [[Int?]] = commits.map { c in c.parents.map { indexByOid[$0] } }
@@ -364,6 +370,9 @@ public struct Extractor: Sendable {
         health.put(UInt32(localCount), at: Layout.Health.localBranches)
         health.put(UInt32(remoteCount), at: Layout.Health.remoteBranches)
         health.put(UInt32(tagCount), at: Layout.Health.tags)
+        health.put(ahead, at: Layout.Health.ahead)
+        health.put(behind, at: Layout.Health.behind)
+        health.put(UInt32(stashes), at: Layout.Health.stashes)
         w.set(.health, Data(health.bytes))
 
         var statusData = Data()

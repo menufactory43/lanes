@@ -45,3 +45,10 @@ binaire réel d'Xcode ou des Command Line Tools. `/usr/bin/git` est un shim qui
 relance la résolution `xcode-select` à chaque appel (+10 ms). Une extraction
 fait une dizaine d'appels : c'est la différence entre 1,4 s et 50 ms sur un
 petit dépôt, et une vérification d'empreinte au lancement qui devient gratuite.
+
+## ADR-9 : le dashboard reçoit des fournisseurs, il n'appelle rien lui-même
+Les fichiers d'un commit, l'ouverture dans le Finder, la recherche GitHub et
+le clonage sont des fermetures injectées (`DashboardProviders`). Le module
+`Dashboard` reste sans dépendance sur `GitExtract`, `Sync` ou le réseau, donc
+il ne peut toujours pas déclencher `git` pendant un rendu, et il se prévisualise
+avec des fournisseurs inertes.

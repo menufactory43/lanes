@@ -2,7 +2,23 @@ import Foundation
 import GitExtract
 import Snapshot
 
+import Sync
+
 enum CommandLineBuild {
+    static func search(query: String) -> Int32 {
+        let sem = DispatchSemaphore(value: 0)
+        nonisolated(unsafe) var code: Int32 = 0
+        Task {
+            do {
+                let r = try await GitHubSearch.search(query)
+                for x in r { print("\(x.fullName)  ★\(x.stars)  \(x.language ?? "")  \(x.cloneURL)") }
+            } catch { FileHandle.standardError.write(Data("erreur: \(error.localizedDescription)\n".utf8)); code = 1 }
+            sem.signal()
+        }
+        sem.wait()
+        return code
+    }
+
     static func run(path: String) -> Int32 {
         do {
             let t0 = Date()
