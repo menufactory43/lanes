@@ -9,6 +9,16 @@ enum Preferences {
     private static let lastRepoKey = "lastRepo"
     private static let recentsKey = "recentRepos"
     private static let visitsKey = "lastVisits"
+    private static let discoveredKey = "discoveredRepos"
+    private static let discoveredAtKey = "discoveredAt"
+
+    static var discovered: [String] {
+        get { d.stringArray(forKey: discoveredKey) ?? [] }
+        set { d.set(newValue, forKey: discoveredKey); d.set(Date().timeIntervalSince1970, forKey: discoveredAtKey) }
+    }
+    static var discoveredAt: Date? {
+        let t = d.double(forKey: discoveredAtKey); return t > 0 ? Date(timeIntervalSince1970: t) : nil
+    }
 
     static var lastRepo: String? {
         get { d.string(forKey: lastRepoKey) }

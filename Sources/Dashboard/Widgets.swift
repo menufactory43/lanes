@@ -334,3 +334,71 @@ struct CommitDetailWidget: View {
         }
     }
 }
+
+struct ReposWidget: View {
+    @Environment(\.glyph) private var t
+    let repos: [RepoEntry]
+    let current: String?
+    let discovering: Bool
+    let onSelect: (String) -> Void
+    let onOpen: () -> Void
+    @AppStorage("reposCollapsed") private var collapsed = false
+
+    var body: some View {
+        let currentName = repos.first { $0.path == current }?.name
+        Frame(collapsed ? "▸ dépôts" : "▾ dépôts", trailing: discovering ? "recherche…" : "\(repos.count) · ⌘1…9 · ⌘[ ⌘]") {
+            VStack(alignment: .leading, spacing: 1) {
+                if collapsed {
+                    HStack(spacing: 6) {
+                        Text(currentName ?? "—").foregroundStyle(t.accent).lineLimit(1)
+                        Spacer()
+                        Text("\(repos.count) dépôts").font(t.smallFont).foregroundStyle(t.muted)
+                    }
+                } else {
+                    ScrollView(.vertical) {
+                        VStack(alignment: .leading, spacing: 1) { rows }
+                    }
+                    .frame(maxHeight: t.cell.height * 12 + 12)
+                    .scrollIndicators(.automatic)
+                    if repos.isEmpty {
+                        Text("aucun dépôt connu").foregroundStyle(t.muted)
+                    }
+                    Button("+ ouvrir un autre dépôt…", action: onOpen).buttonStyle(.plain).foregroundStyle(t.accent).padding(.top, 4)
+                }
+            }
+        }
+        .overlay(alignment: .topLeading) {
+            // Zone de clic sur le titre pour replier / déplier.
+            Button { withAnimation(.easeOut(duration: 0.15)) { collapsed.toggle() } } label: {
+                Color.clear.frame(width: 120, height: 26).contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(collapsed ? "déplier les dépôts" : "replier les dépôts")
+        }
+    }
+
+    @ViewBuilder private var rows: some View {
+                ForEach(Array(repos.enumerated()), id: \.element.id) { i, r in
+                    let isCurrent = r.path == current
+                    Button { onSelect(r.path) } label: {
+                        HStack(spacing: 6) {
+                            Text(i < 9 ? "\(i + 1)" : " ").font(t.smallFont).foregroundStyle(t.faint).frame(width: t.cell.width)
+                            Text(r.name).foregroundStyle(isCurrent ? t.accent : t.ink).lineLimit(1).truncationMode(.middle)
+                            Spacer(minLength: 4)
+                            if let head = r.head {
+                                Text(head).font(t.smallFont).foregroundStyle(t.muted).lineLimit(1).truncationMode(.middle).frame(maxWidth: t.cell.width * 10, alignment: .trailing)
+                            }
+                            Text(r.commits.map { Tabular.int($0) } ?? (r.hasSnapshot ? "" : "·")).font(t.smallFont).foregroundStyle(t.muted).monospacedDigit()
+                                .frame(width: t.cell.width * 6, alignment: .trailing)
+                        }
+                        .padding(.horizontal, 4).padding(.vertical, 1)
+                        .background(isCurrent ? t.accent.opacity(0.12) : .clear)
+                        .overlay(alignment: .leading) { if isCurrent { Rectangle().fill(t.accent).frame(width: 2) } }
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("\(r.name), \(r.head ?? ""), \(r.commits.map { "\($0) commits" } ?? "")")
+                    .help(r.path)
+                }
+    }
+}

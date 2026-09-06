@@ -9,6 +9,10 @@ rebond, y compris sur un dépôt de 85 000 commits.
 
 ## Ce qu'il montre
 
+- Le cadre « dépôts » : tous les dépôts du Mac (récents + découverts sous ta
+  maison), bascule instantanée au clic, ⌘1…⌘9, ⌘[ et ⌘]. Les snapshots
+  manquants se construisent en fond pour que chaque bascule soit immédiate.
+  Le cadre se replie d'un clic sur son titre.
 - Le graphe des commits avec ses voies, branches, tags et HEAD, virtualisé.
 - Depuis ta dernière visite : commits, auteurs, fichiers touchés.
 - L'arbre de travail : modifié, indexé, non suivi.

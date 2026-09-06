@@ -11,10 +11,12 @@ public struct RootView: View {
     @Environment(\.glyph) private var t
     @Bindable var model: DashboardModel
     let onOpen: () -> Void
+    let onSelectRepo: (String) -> Void
 
-    public init(model: DashboardModel, onOpen: @escaping () -> Void) {
+    public init(model: DashboardModel, onOpen: @escaping () -> Void, onSelectRepo: @escaping (String) -> Void) {
         self.model = model
         self.onOpen = onOpen
+        self.onSelectRepo = onSelectRepo
     }
 
     public var body: some View {
@@ -23,7 +25,13 @@ public struct RootView: View {
             if let s = model.snapshot {
                 dashboard(s)
             } else {
-                EmptyRepoView(state: model.building, onOpen: onOpen)
+                HStack(alignment: .top, spacing: 10) {
+                    if !model.repos.isEmpty {
+                        ReposWidget(repos: model.repos, current: model.currentRepoPath, discovering: model.discovering, onSelect: onSelectRepo, onOpen: onOpen)
+                            .frame(width: 330).padding(12)
+                    }
+                    EmptyRepoView(state: model.building, onOpen: onOpen)
+                }
             }
         }
         .font(t.font)
@@ -39,6 +47,7 @@ public struct RootView: View {
             HStack(alignment: .top, spacing: 10) {
                 ScrollView(.vertical) {
                     VStack(spacing: 10) {
+                        ReposWidget(repos: model.repos, current: model.currentRepoPath, discovering: model.discovering, onSelect: onSelectRepo, onOpen: onOpen)
                         if let a { SinceVisitWidget(since: a.sinceLastVisit, snapshot: s, selection: $model.selectedCommit) }
                         WorkingTreeWidget(snapshot: s)
                         if let sel = model.selectedCommit, sel < s.commits.count {

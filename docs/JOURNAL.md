@@ -70,6 +70,16 @@
 - Interaction vérifiée par événements souris réels (CGEvent) : filtre,
   sélection, détail du commit. État d'erreur (« pas un dépôt git ») vérifié.
 
+### M8 Navigation entre dépôts (demande utilisateur)
+- `RepoDiscovery` parcourt la maison (profondeur 4, dossiers système et caches
+  exclus, au plus une fois par jour) : 53 dépôts trouvés en quelques centaines
+  de ms. Les snapshots manquants se construisent en fond, un par un, historique
+  borné à 100 000 commits.
+- Cadre « dépôts » repliable (état dans UserDefaults), 12 lignes défilantes,
+  ⌘1…9 / ⌘[ ⌘] via un sous-menu Fichier › Aller au dépôt. Un élément de menu
+  masqué ne reçoit pas son raccourci : leçon apprise, sous-menu visible.
+- Preuve : ⌘2 depuis lifequest ouvre git/git (85 557 commits) sans délai perceptible.
+
 ### Limites connues
 - Le premier lancement sur un dépôt construit le snapshot : l'utilisateur voit
   la progression, pas le tableau de bord. Le « woaw » commence au second.

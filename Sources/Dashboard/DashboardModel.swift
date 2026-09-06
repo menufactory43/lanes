@@ -16,6 +16,10 @@ public final class DashboardModel {
     public var filter: String = ""
     public var lastVisit: Date?
     public var errorMessage: String?
+    /// Dépôts connus, dans l'ordre d'affichage (récents d'abord, puis découverts).
+    public var repos: [RepoEntry] = []
+    public var currentRepoPath: String?
+    public var discovering = false
 
     public enum BuildState: Equatable, Sendable {
         case idle

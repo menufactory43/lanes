@@ -43,7 +43,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         w.title = model.snapshot?.meta.repoName ?? "Lanes"
         coordinator.onTitleChange = { [weak w] name in w?.title = name }
 
-        let root = ContentHost(model: model, onOpen: { [weak self] in self?.openPanel() }, onDrop: { [weak self] path in self?.coordinator.open(path: path) })
+        coordinator.refreshRepoList()
+        let root = ContentHost(model: model, onOpen: { [weak self] in self?.openPanel() },
+                               onDrop: { [weak self] path in self?.coordinator.open(path: path) },
+                               onSelectRepo: { [weak self] path in self?.coordinator.open(path: path) })
         LaunchMetrics.note("fenêtre créée")
         let hosting = NSHostingView(rootView: root)
         hosting.sizingOptions = []
@@ -85,6 +88,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                     coordinator.open(path: requested)
                 }
             }
+            coordinator.discoverAndPrebuild()
             if LaunchMetrics.isMeasuring {
                 FileHandle.standardError.write(Data((LaunchMetrics.report() + "\n").utf8))
                 if ProcessInfo.processInfo.environment["LANES_AUTOQUIT"] == "1" {
@@ -132,6 +136,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         recentItem.submenu = recent
         file.addItem(recentItem)
         file.addItem(.separator())
+        file.addItem(withTitle: "Dépôt suivant", action: #selector(nextRepo), keyEquivalent: "]")
+        file.addItem(withTitle: "Dépôt précédent", action: #selector(previousRepo), keyEquivalent: "[")
+        let goItem = NSMenuItem(title: "Aller au dépôt", action: nil, keyEquivalent: "")
+        let go = NSMenu(title: "Aller au dépôt")
+        for i in 1...9 {
+            let item = NSMenuItem(title: "Dépôt \(i)", action: #selector(selectRepoNumber(_:)), keyEquivalent: "\(i)")
+            item.tag = i - 1
+            go.addItem(item)
+        }
+        goItem.submenu = go
+        file.addItem(goItem)
+        file.addItem(withTitle: "Chercher les dépôts de ce Mac", action: #selector(rediscover), keyEquivalent: "")
+        file.addItem(.separator())
         file.addItem(withTitle: "Reconstruire le snapshot", action: #selector(rebuild), keyEquivalent: "r")
         file.addItem(.separator())
         file.addItem(withTitle: "Fermer", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
@@ -169,6 +186,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     @objc private func openPanelAction() { openPanel() }
+    @objc private func nextRepo() { coordinator.cycle(+1) }
+    @objc private func previousRepo() { coordinator.cycle(-1) }
+    @objc private func selectRepoNumber(_ sender: NSMenuItem) {
+        guard sender.tag < model.repos.count else { return }
+        coordinator.open(path: model.repos[sender.tag].path)
+    }
+    @objc private func rediscover() { coordinator.discoverAndPrebuild(force: true) }
     @objc private func focusFilter() { NotificationCenter.default.post(name: .lanesFocusFilter, object: nil) }
 
     @objc private func rebuild() {
@@ -206,10 +230,11 @@ struct ContentHost: View {
     let model: DashboardModel
     let onOpen: () -> Void
     let onDrop: (String) -> Void
+    let onSelectRepo: (String) -> Void
     @State private var targeted = false
 
     var body: some View {
-        RootView(model: model, onOpen: onOpen)
+        RootView(model: model, onOpen: onOpen, onSelectRepo: onSelectRepo)
             .glyphTheme(.default)
             .onDrop(of: [UTType.fileURL], isTargeted: $targeted) { providers in
                 guard let p = providers.first else { return false }
