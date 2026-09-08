@@ -1,5 +1,14 @@
 # Lanes
 
+> **English** — Lanes is a read-only, all-monospace Git dashboard for macOS built
+> around a launch budget: **the whole dashboard is on screen in under 400 ms from
+> a cold start**, before the Dock icon finishes its first bounce, even on a
+> repository with 85,000 commits. It never reads Git at launch: it memory-maps a
+> binary snapshot built last time, draws, then checks in the background whether
+> the repo changed. Download the notarized app from
+> [Releases](https://github.com/menufactory43/lanes/releases) or read on in
+> French. Requires macOS 15+. MIT.
+
 Tableau de bord Git en lecture seule pour macOS, entièrement monospace, conçu
 autour d'un budget de lancement : **tout le tableau de bord est à l'écran en
 moins de 400 ms à froid**, avant que l'icône du Dock ait fini son premier
@@ -39,6 +48,13 @@ si besoin. Pendant qu'elle est ouverte, FSEvents déclenche la même vérificati
 Détails : [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), décisions :
 [docs/DECISIONS.md](docs/DECISIONS.md), journal : [docs/JOURNAL.md](docs/JOURNAL.md).
 
+## Installer
+
+Télécharge `Lanes-x.y.zip` depuis les
+[Releases](https://github.com/menufactory43/lanes/releases), décompresse, glisse
+`Lanes.app` dans Applications. L'app est signée Developer ID et notarisée par
+Apple : elle s'ouvre d'un double-clic. Site : <https://menufactory43.github.io/lanes/>.
+
 ## Construire
 
 ```
@@ -60,7 +76,17 @@ LANES_MEASURE=1 LANES_AUTOQUIT=1 Lanes.app/Contents/MacOS/Lanes ~/mon/depot
 Le premier lancement sur un dépôt construit le snapshot (quelques dixièmes de
 seconde à quelques secondes selon la taille) ; les suivants sont instantanés.
 
+## Publier
+
+```
+Scripts/release.sh 1.0            # build, signature Developer ID, notarisation, zip + dmg, release GitHub
+```
+
 ## Lecture seule
 
 Lanes n'exécute aucune commande qui modifie un dépôt. `GIT_OPTIONAL_LOCKS=0`
 garantit qu'il ne pose même pas de verrou sur l'index.
+
+## Licence
+
+MIT. Voir [LICENSE](LICENSE).
