@@ -44,7 +44,8 @@ otool -L "$APP/Contents/MacOS/Lanes" | grep -vE "/System/|/usr/lib/" | tail -n +
 etape "Signature Developer ID (runtime durci, horodatage)"
 codesign --force --options runtime --timestamp --sign "$IDENTITY" --identifier app.lanes.dashboard "$APP"
 codesign --verify --deep --strict --verbose=2 "$APP"
-codesign -dvv "$APP" 2>&1 | grep -q "^Authority=Developer ID Application" || { echo "✗ pas de signature Developer ID"; exit 1; }
+SIG="$(codesign -dvv "$APP" 2>&1)"
+[[ "$SIG" == *"Authority=Developer ID Application"* ]] || { echo "✗ pas de signature Developer ID"; exit 1; }
 
 if [[ "$NOTARIZE" == 1 ]]; then
   etape "Notarisation de l'app (profil « $NOTARY_PROFILE »)"
