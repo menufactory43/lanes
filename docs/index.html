@@ -6,6 +6,9 @@
 <title>Lanes — tableau de bord Git pour macOS, à l'écran en moins de 400 ms</title>
 <meta name="description" content="Lanes est un tableau de bord Git en lecture seule pour macOS, entièrement monospace. Tout est à l'écran en moins de 400 ms à froid, même sur un dépôt de 85 000 commits. Open source, MIT.">
 <link rel="canonical" href="https://menufactory43.github.io/lanes/">
+<link rel="alternate" hreflang="fr" href="https://menufactory43.github.io/lanes/">
+<link rel="alternate" hreflang="en" href="https://menufactory43.github.io/lanes/en/">
+<link rel="alternate" hreflang="x-default" href="https://menufactory43.github.io/lanes/en/">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Lanes — tableau de bord Git pour macOS">
 <meta property="og:description" content="Tout le dépôt à l'écran en moins de 400 ms à froid. Lecture seule, monospace, open source.">
@@ -23,9 +26,8 @@ main{max-width:1100px;margin:0 auto;padding:56px 24px 80px}
 header{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
 header h1{font-size:28px;margin:0;font-weight:700}
 .tag{font-size:12px;padding:1px 7px;border:1px solid var(--amber);color:var(--amber);border-radius:3px}
-.lede{font-size:20px;line-height:1.45;margin:26px 0 8px;max-width:820px}
+.lede{font-size:20px;line-height:1.45;margin:26px 0 30px;max-width:820px}
 .lede b{color:var(--amber);font-weight:700}
-.en{color:var(--dim);max-width:820px;margin:0 0 30px}
 .cta{display:flex;gap:12px;flex-wrap:wrap;margin:0 0 42px}
 .btn{display:inline-block;padding:10px 18px;border:1px solid var(--amber);color:var(--bg);background:var(--amber);text-decoration:none;font-weight:700;border-radius:4px}
 .btn.alt{background:transparent;color:var(--fg);border-color:var(--line)}
@@ -43,6 +45,9 @@ h2{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)
 pre{background:#111;border:1px solid var(--line);border-radius:4px;padding:14px 16px;overflow-x:auto;margin:0 0 48px;font-size:13px}
 footer{color:var(--dim);font-size:13px;border-top:1px dashed var(--line);padding-top:18px}
 footer a{color:var(--dim)}
+.lang{margin-left:auto;font-size:13px}
+.lang a{color:var(--dim);text-decoration:none;padding:1px 6px;border:1px solid var(--line);border-radius:3px}
+.lang a:hover{color:var(--fg)}
 </style>
 </head>
 <body>
@@ -52,10 +57,10 @@ footer a{color:var(--dim)}
   <span class="tag">macOS 15+</span>
   <span class="tag" style="border-color:var(--line);color:var(--dim)">lecture seule</span>
   <span class="tag" style="border-color:var(--line);color:var(--dim)">MIT</span>
+  <span class="lang"><a href="en/">EN</a></span>
 </header>
 
 <p class="lede">Un tableau de bord Git pour macOS, entièrement monospace, construit autour d'un budget : <b>tout le dépôt à l'écran en moins de 400 ms à froid</b>, avant que l'icône du Dock ait fini son premier rebond. Même sur <code>git/git</code> et ses 85 000 commits.</p>
-<p class="en">EN — A read-only, all-monospace Git dashboard for macOS. The whole dashboard is on screen in under 400 ms from a cold start, even on an 85,000-commit repository. Open source, MIT.</p>
 
 <p class="cta">
   <a class="btn" href="https://github.com/menufactory43/lanes/releases/latest">Télécharger pour Mac</a>
