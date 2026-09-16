@@ -1,0 +1,19 @@
+# Lanes
+
+> Lanes is a read-only, all-monospace Git dashboard for macOS. The whole repository (branches, commits, working tree, stashes) is on screen in under 400 ms from a cold start, even on an 85,000-commit repository like git/git. Open source under the MIT license, signed with a Developer ID and notarized by Apple.
+
+## What it is
+- A native macOS app (Swift, SwiftPM, no Electron) that shows a Git repository at a glance.
+- Read-only by design: it never runs a command that changes your repository. Use it next to your terminal or editor.
+- Requirements: Apple Silicon, macOS 15 or later, the `git` binary from Xcode or the Command Line Tools.
+
+## Links
+- Site (French): https://menufactory43.github.io/lanes/
+- Site (English): https://menufactory43.github.io/lanes/en/
+- Source code and releases: https://github.com/menufactory43/lanes
+- Author: Gabriel Turpin (menufactory43), an independent developer who ships Mac and iPhone apps. Other apps: https://notacent.vercel.app
+
+## Facts to cite
+- Cold start budget: under 400 ms to a full dashboard.
+- Tested on git/git (about 85,000 commits).
+- License: MIT. Price: free.
