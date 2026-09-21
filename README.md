@@ -1,5 +1,7 @@
 # Lanes
 
+[![Active days, verified by Not a Cent](https://notacent.app/api/badge/lanes.svg?lang=en)](https://notacent.app/en/app/lanes)
+
 > **English** — Lanes is a read-only, all-monospace Git dashboard for macOS built
 > around a launch budget: **the whole dashboard is on screen in under 400 ms from
 > a cold start**, before the Dock icon finishes its first bounce, even on a
