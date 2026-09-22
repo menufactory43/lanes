@@ -17,7 +17,8 @@ public enum GitHubSearch {
         c.queryItems = [.init(name: "q", value: query), .init(name: "per_page", value: "8"), .init(name: "sort", value: "stars")]
         var req = URLRequest(url: c.url!)
         req.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
-        req.setValue("Lanes/1.0", forHTTPHeaderField: "User-Agent")
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "dev"
+        req.setValue("Lanes/\(version)", forHTTPHeaderField: "User-Agent")
         req.timeoutInterval = 8
         let (data, resp) = try await URLSession.shared.data(for: req)
         if let http = resp as? HTTPURLResponse, http.statusCode == 403 {
