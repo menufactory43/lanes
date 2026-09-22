@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Lanes — a Git dashboard for macOS, on screen in under 400 ms</title>
-<meta name="description" content="Lanes is a read-only, all-monospace Git dashboard for macOS. The whole dashboard is on screen in under 400 ms from a cold start, even on an 85,000-commit repository. Open source, MIT.">
+<title>Lanes — a read-only Git dashboard for macOS, on screen in about half a second</title>
+<meta name="description" content="Lanes is a read-only, all-monospace Git dashboard for macOS. The whole dashboard is on screen in about half a second, even on an 85,000-commit repository. It never runs Git at launch. Open source, MIT.">
 <link rel="icon" type="image/png" href="/lanes/favicon.png">
 <link rel="apple-touch-icon" href="/lanes/apple-touch-icon.png">
 <link rel="canonical" href="https://menufactory43.github.io/lanes/en/">
@@ -13,7 +13,7 @@
 <link rel="alternate" hreflang="x-default" href="https://menufactory43.github.io/lanes/en/">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Lanes — a Git dashboard for macOS">
-<meta property="og:description" content="The whole repository on screen in under 400 ms from a cold start. Read-only, monospace, open source.">
+<meta property="og:description" content="The whole repository on screen in about half a second, even on git/git. Read-only, monospace, open source.">
 <meta property="og:url" content="https://menufactory43.github.io/lanes/en/">
 <meta property="og:image" content="https://menufactory43.github.io/lanes/og.png">
 <meta property="og:locale" content="en_US">
@@ -62,7 +62,7 @@ footer a{color:var(--dim)}
   <span class="lang"><a href="../">FR</a></span>
 </header>
 
-<p class="lede">A Git dashboard for macOS, all monospace, built around a budget: <b>the whole repository on screen in under 400 ms from a cold start</b>, before the Dock icon finishes its first bounce. Even on <code>git/git</code> and its 85,000 commits.</p>
+<p class="lede">A Git dashboard for macOS, all monospace, built around one rule: <b>never run Git at launch</b>. It maps a snapshot built last time, draws, then checks in the background. The whole repository is on screen in about half a second, even on <code>git/git</code> and its 85,000 commits.</p>
 
 <p class="cta">
   <a class="btn" href="https://github.com/menufactory43/lanes/releases/latest">Download for Mac</a>
@@ -73,7 +73,7 @@ footer a{color:var(--dim)}
 <p class="req">Developer ID signed and notarized by Apple. Apple Silicon, macOS 15 or later. <code>git</code> from Xcode or the Command Line Tools.</p>
 
 <section class="stats">
-  <div><div class="n">&lt; 400 ms</div><div class="l">from click to a full dashboard, cold</div></div>
+  <div><div class="n">525 ms</div><div class="l">median to a full dashboard on git/git (M2, 8 GB, 20 launches, warm cache)</div></div>
   <div><div class="n">85,557</div><div class="l">commits in git/git, virtualized graph, smooth</div></div>
   <div><div class="n">0.24 ms</div><div class="l">to open a 30 MB snapshot</div></div>
   <div><div class="n">1.1 MB</div><div class="l">binary, no dependency outside the system</div></div>

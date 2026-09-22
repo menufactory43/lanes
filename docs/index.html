@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Lanes — tableau de bord Git pour macOS, à l'écran en moins de 400 ms</title>
-<meta name="description" content="Lanes est un tableau de bord Git en lecture seule pour macOS, entièrement monospace. Tout est à l'écran en moins de 400 ms à froid, même sur un dépôt de 85 000 commits. Open source, MIT.">
+<title>Lanes — tableau de bord Git en lecture seule pour macOS, à l'écran en une demi-seconde</title>
+<meta name="description" content="Lanes est un tableau de bord Git en lecture seule pour macOS, entièrement monospace. Tout est à l'écran en une demi-seconde environ, même sur un dépôt de 85 000 commits. Il ne lance jamais Git au démarrage. Open source, MIT.">
 <link rel="icon" type="image/png" href="/lanes/favicon.png">
 <link rel="apple-touch-icon" href="/lanes/apple-touch-icon.png">
 <link rel="canonical" href="https://menufactory43.github.io/lanes/">
@@ -13,7 +13,7 @@
 <link rel="alternate" hreflang="x-default" href="https://menufactory43.github.io/lanes/en/">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Lanes — tableau de bord Git pour macOS">
-<meta property="og:description" content="Tout le dépôt à l'écran en moins de 400 ms à froid. Lecture seule, monospace, open source.">
+<meta property="og:description" content="Tout le dépôt à l'écran en une demi-seconde environ, même sur git/git. Lecture seule, monospace, open source.">
 <meta property="og:url" content="https://menufactory43.github.io/lanes/">
 <meta property="og:image" content="https://menufactory43.github.io/lanes/og.png">
 <meta property="og:locale" content="fr_FR">
@@ -62,7 +62,7 @@ footer a{color:var(--dim)}
   <span class="lang"><a href="en/">EN</a></span>
 </header>
 
-<p class="lede">Un tableau de bord Git pour macOS, entièrement monospace, construit autour d'un budget : <b>tout le dépôt à l'écran en moins de 400 ms à froid</b>, avant que l'icône du Dock ait fini son premier rebond. Même sur <code>git/git</code> et ses 85 000 commits.</p>
+<p class="lede">Un tableau de bord Git pour macOS, entièrement monospace, construit autour d'une règle : <b>ne jamais lancer Git au démarrage</b>. Il ouvre un instantané construit la fois précédente, dessine, puis vérifie en arrière-plan. Tout le dépôt est à l'écran en une demi-seconde environ, même sur <code>git/git</code> et ses 85 000 commits.</p>
 
 <p class="cta">
   <a class="btn" href="https://github.com/menufactory43/lanes/releases/latest">Télécharger pour Mac</a>
@@ -73,7 +73,7 @@ footer a{color:var(--dim)}
 <p class="req">Signé Developer ID et notarisé par Apple. Apple Silicon, macOS 15 ou plus récent. <code>git</code> de Xcode ou des Command Line Tools.</p>
 
 <section class="stats">
-  <div><div class="n">&lt; 400 ms</div><div class="l">du clic à un tableau de bord complet, à froid</div></div>
+  <div><div class="n">525 ms</div><div class="l">médiane jusqu'au tableau de bord complet sur git/git (M2, 8 Go, 20 lancements, cache chaud)</div></div>
   <div><div class="n">85 557</div><div class="l">commits de git/git, graphe virtualisé, fluide</div></div>
   <div><div class="n">0,24 ms</div><div class="l">pour ouvrir un snapshot de 30 Mo</div></div>
   <div><div class="n">1,1 Mo</div><div class="l">de binaire, aucune dépendance hors système</div></div>
