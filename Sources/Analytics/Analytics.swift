@@ -34,7 +34,11 @@ public struct Analytics: Sendable {
         let sinceTs = lastVisit.map { Int64($0.timeIntervalSince1970) }
         let recentCutoff = Int64(now.timeIntervalSince1970) - 90 * 86_400
         let dayStart = tz.startOfDay(for: now)
-        let calendarStart = tz.date(byAdding: .day, value: -(53 * 7 - 1) - tz.component(.weekday, from: dayStart) + 1, to: dayStart)!
+        // Lundi de la semaine en cours, moins 52 semaines : la semaine courante est
+        // la 53e colonne. (L'ancien calcul partait du dimanche et faisait tomber
+        // la semaine courante hors de la grille du lundi au samedi.)
+        let daysSinceMonday = (tz.component(.weekday, from: dayStart) + 5) % 7
+        let calendarStart = tz.date(byAdding: .day, value: -(52 * 7 + daysSinceMonday), to: dayStart)!
         let calStartTs = Int64(calendarStart.timeIntervalSince1970)
         var first = Int64.max, last = Int64.min
 
