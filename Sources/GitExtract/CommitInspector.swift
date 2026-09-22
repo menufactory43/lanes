@@ -46,12 +46,12 @@ public enum Cloner {
         let name = Self.repoName(from: url)
         let dest = directory.appendingPathComponent(name)
         if FileManager.default.fileExists(atPath: dest.path) {
-            throw GitError(args: ["clone"], status: 1, stderr: "le dossier \(dest.path) existe déjà")
+            throw GitError(args: ["clone"], status: 1, stderr: String(localized: "folder \(dest.path) already exists"))
         }
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         let args = ["-C", directory.path, "clone", "--progress", url, dest.path]
         let status = try GitRunner.spawnStreaming(GitRunner.resolvedGitPath, args, onStderrChunk: progress)
-        guard status == 0 else { throw GitError(args: ["clone", url], status: status, stderr: "échec du clonage (code \(status))") }
+        guard status == 0 else { throw GitError(args: ["clone", url], status: status, stderr: String(localized: "clone failed (exit code \(status))")) }
         return dest.path
     }
 

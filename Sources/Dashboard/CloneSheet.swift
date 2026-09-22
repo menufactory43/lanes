@@ -32,13 +32,13 @@ struct CloneSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("CLONER UN DÉPÔT").font(t.smallFont).tracking(1.5).foregroundStyle(t.muted)
+                Text(String(localized: "clone a repository").uppercased()).font(t.smallFont).tracking(1.5).foregroundStyle(t.muted)
                 Spacer()
                 Text("⌘⇧O").font(t.smallFont).foregroundStyle(t.faint)
             }
             HStack(spacing: 6) {
                 Text(">").foregroundStyle(t.muted)
-                TextField("URL, owner/repo, ou mots-clés GitHub", text: $input)
+                TextField("URL, owner/repo, or GitHub keywords", text: $input)
                     .textFieldStyle(.plain).focused($focused)
                     .onSubmit { if target != nil { startClone() } }
                 if searching { ProgressView().controlSize(.small) }
@@ -48,7 +48,7 @@ struct CloneSheet: View {
             .onChange(of: input) { _, new in scheduleSearch(new) }
 
             if let d = directURL, chosen == nil {
-                Leader("clonera", d, emphasis: true)
+                Leader(String(localized: "will clone"), d, emphasis: true)
             }
             if let searchError { Text(searchError).font(t.smallFont).foregroundStyle(.red) }
             if !results.isEmpty {
@@ -73,11 +73,11 @@ struct CloneSheet: View {
             }
 
             HStack(spacing: 6) {
-                Text("dans").foregroundStyle(t.muted)
+                Text("into").foregroundStyle(t.muted)
                 Text(destination.path.replacingOccurrences(of: NSHomeDirectory(), with: "~")).foregroundStyle(t.ink).lineLimit(1).truncationMode(.middle)
                 if let tg = target { Text("/" + lastComponent(tg)).foregroundStyle(t.accent) }
                 Spacer()
-                Button("choisir…") { Task { if let d = await providers.chooseDirectory(destination) { destination = d } } }
+                Button("choose…") { Task { if let d = await providers.chooseDirectory(destination) { destination = d } } }
                     .buttonStyle(.plain).foregroundStyle(t.accent)
             }
             .font(t.font)
@@ -92,8 +92,8 @@ struct CloneSheet: View {
 
             HStack {
                 Spacer()
-                Button("annuler") { onDone(nil) }.buttonStyle(.plain).foregroundStyle(t.muted).keyboardShortcut(.cancelAction)
-                Button(cloning ? "clonage…" : "cloner") { startClone() }
+                Button("cancel") { onDone(nil) }.buttonStyle(.plain).foregroundStyle(t.muted).keyboardShortcut(.cancelAction)
+                Button(cloning ? String(localized: "cloning…") : String(localized: "clone")) { startClone() }
                     .buttonStyle(.plain).foregroundStyle(target == nil || cloning ? t.faint : t.accent)
                     .disabled(target == nil || cloning)
                     .keyboardShortcut(.defaultAction)
@@ -135,7 +135,7 @@ struct CloneSheet: View {
 
     private func startClone() {
         guard let url = target, !cloning else { return }
-        cloning = true; error = nil; progress = "démarrage…"
+        cloning = true; error = nil; progress = String(localized: "starting…")
         let dest = destination
         let cloneFn = providers.clone
         Task {

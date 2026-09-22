@@ -79,7 +79,7 @@ public struct RootView: View {
                             DirectoriesWidget(dirs: a.directories)
                             ClockWidget(clock: a.clock)
                         } else {
-                            Frame("activité") { Text("…").foregroundStyle(t.muted) }
+                            Frame(String(localized: "activity")) { Text(verbatim: "…").foregroundStyle(t.muted) }
                         }
                     }
                 }
@@ -109,50 +109,52 @@ struct BuildingView: View {
                     HStack(spacing: 6) { ProgressView().controlSize(.small); Text(detail.isEmpty ? stage : "\(stage) · \(detail)").font(t.smallFont).foregroundStyle(t.muted) }
                 }
                 Spacer()
-                Button("ouvrir…", action: onOpen).buttonStyle(.plain).font(t.font).foregroundStyle(t.accent).keyboardShortcut("o", modifiers: .command)
-                Button("cloner…", action: onClone).buttonStyle(.plain).font(t.font).foregroundStyle(t.accent).keyboardShortcut("o", modifiers: [.command, .shift])
+                Button("open…", action: onOpen).buttonStyle(.plain).font(t.font).foregroundStyle(t.accent).keyboardShortcut("o", modifiers: .command)
+                Button("clone…", action: onClone).buttonStyle(.plain).font(t.font).foregroundStyle(t.accent).keyboardShortcut("o", modifiers: [.command, .shift])
             }
             .padding(.horizontal, 16).padding(.vertical, 10)
             Rectangle().fill(t.faint).frame(height: 1)
             HStack(alignment: .top, spacing: 0) {
-                ForEach(["commits", "auteurs", "branches", "fichiers", "travail", "série"], id: \.self) { l in
+                ForEach([String(localized: "commits"), String(localized: "authors"), String(localized: "branches"),
+                         String(localized: "files"), String(localized: "uncommitted"), String(localized: "streak")], id: \.self) { l in
                     Stat(l, "—"); Spacer()
                 }
             }.padding(.horizontal, 16).padding(.vertical, 12)
             HStack(alignment: .top, spacing: 10) {
                 VStack(spacing: 10) {
                     ReposWidget(repos: model.repos, current: model.currentRepoPath, discovering: model.discovering, onSelect: onSelectRepo, onOpen: onOpen, providers: model.providers)
-                    Frame("depuis ta dernière visite") { Text("…").foregroundStyle(t.faint) }
-                    Frame("arbre de travail") { Text("…").foregroundStyle(t.faint) }
+                    Frame(String(localized: "since your last visit")) { Text(verbatim: "…").foregroundStyle(t.faint) }
+                    Frame(String(localized: "working tree")) { Text(verbatim: "…").foregroundStyle(t.faint) }
                 }.frame(width: 330)
                 VStack(spacing: 14) {
                     Spacer()
                     switch model.building {
                     case .building(let stage, let detail):
                         Text("LANES").font(.system(size: 28, weight: .semibold, design: .monospaced)).tracking(6).foregroundStyle(t.ink)
-                        Text("première ouverture de \(name ?? "ce dépôt") : construction du snapshot").foregroundStyle(t.muted)
+                        Text(name.map { String(localized: "first time opening \($0): building the snapshot") } ?? String(localized: "first time opening this repository: building the snapshot")).foregroundStyle(t.muted)
                         HStack(spacing: 8) { ProgressView().controlSize(.small); Text(detail.isEmpty ? stage : "\(stage) · \(detail)").foregroundStyle(t.ink) }
-                        Text("les prochaines ouvertures seront instantanées").font(t.smallFont).foregroundStyle(t.faint)
+                        Text("next time it will open instantly").font(t.smallFont).foregroundStyle(t.faint)
                     case .failed(let msg):
                         Text("LANES").font(.system(size: 28, weight: .semibold, design: .monospaced)).tracking(6).foregroundStyle(t.ink)
                         Text(msg).foregroundStyle(.red).multilineTextAlignment(.center).frame(maxWidth: 480)
-                        Button("ouvrir un autre dépôt…", action: onOpen).buttonStyle(.plain).foregroundStyle(t.accent)
+                        Button("open another repository…", action: onOpen).buttonStyle(.plain).foregroundStyle(t.accent)
                     case .idle:
                         Text("LANES").font(.system(size: 28, weight: .semibold, design: .monospaced)).tracking(6).foregroundStyle(t.ink)
-                        Text("tableau de bord git · lecture seule").foregroundStyle(t.muted)
+                        Text("git dashboard · read-only").foregroundStyle(t.muted)
                         HStack(spacing: 18) {
-                            Button("ouvrir un dépôt…  ⌘O", action: onOpen).buttonStyle(.plain).foregroundStyle(t.accent)
-                            Button("cloner…  ⌘⇧O", action: onClone).buttonStyle(.plain).foregroundStyle(t.accent)
+                            Button("open a repository…  ⌘O", action: onOpen).buttonStyle(.plain).foregroundStyle(t.accent)
+                            Button("clone…  ⌘⇧O", action: onClone).buttonStyle(.plain).foregroundStyle(t.accent)
                         }
-                        Text("ou glisse un dossier ici, ou choisis un dépôt à gauche").font(t.smallFont).foregroundStyle(t.muted)
+                        Text("or drop a folder here, or pick a repository on the left").font(t.smallFont).foregroundStyle(t.muted)
                     }
                     Spacer()
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .overlay(Rectangle().stroke(t.rule, style: StrokeStyle(lineWidth: 1, dash: [3, 3])))
                 VStack(spacing: 10) {
-                    ForEach(["activité · 53 semaines", "auteurs", "fichiers chauds · 90 jours", "où le code vit · propriété", "horloge du code"], id: \.self) { f in
-                        Frame(f) { Text("…").foregroundStyle(t.faint) }
+                    ForEach([String(localized: "activity · 53 weeks"), String(localized: "authors"), String(localized: "hot files · 90 days"),
+                              String(localized: "where the code lives · ownership"), String(localized: "code clock")], id: \.self) { f in
+                        Frame(f) { Text(verbatim: "…").foregroundStyle(t.faint) }
                     }
                 }.frame(width: 330)
             }
@@ -169,18 +171,18 @@ struct EmptyRepoView: View {
     var body: some View {
         VStack(spacing: 14) {
             Text("LANES").font(.system(size: 28, weight: .semibold, design: .monospaced)).tracking(6).foregroundStyle(t.ink)
-            Text("tableau de bord git · lecture seule").font(t.font).foregroundStyle(t.muted)
+            Text("git dashboard · read-only").font(t.font).foregroundStyle(t.muted)
             switch state {
             case .building(let stage, let detail):
                 HStack(spacing: 8) { ProgressView().controlSize(.small); Text(detail.isEmpty ? stage : "\(stage) · \(detail)").font(t.font).foregroundStyle(t.muted) }
                     .padding(.top, 10)
             case .failed(let msg):
                 Text(msg).font(t.font).foregroundStyle(.red).multilineTextAlignment(.center).frame(maxWidth: 480)
-                Button("ouvrir un autre dépôt…", action: onOpen).buttonStyle(.plain).font(t.font).foregroundStyle(t.accent).padding(.top, 6)
+                Button("open another repository…", action: onOpen).buttonStyle(.plain).font(t.font).foregroundStyle(t.accent).padding(.top, 6)
             case .idle:
-                Button("ouvrir un dépôt…  ⌘O", action: onOpen).buttonStyle(.plain).font(t.font).foregroundStyle(t.accent).padding(.top, 10)
+                Button("open a repository…  ⌘O", action: onOpen).buttonStyle(.plain).font(t.font).foregroundStyle(t.accent).padding(.top, 10)
                     .keyboardShortcut("o", modifiers: .command)
-                Text("ou glisse un dossier ici").font(t.smallFont).foregroundStyle(t.muted)
+                Text("or drop a folder here").font(t.smallFont).foregroundStyle(t.muted)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

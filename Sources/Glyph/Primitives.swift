@@ -41,7 +41,7 @@ public struct Spark: View {
             return Spark.glyphs[min(7, max(0, i))]
         })
         Text(s).font(t.font).foregroundStyle(color ?? t.accent)
-            .accessibilityLabel("\(values.count) valeurs, maximum \(Int(mx))")
+            .accessibilityLabel("\(values.count) values, max \(Int(mx))")
     }
 }
 

@@ -4,6 +4,15 @@ import Analytics
 import Glyph
 import AppKit
 
+/// Jours de la semaine abrégés sur deux lettres, lundi d'abord.
+var weekdayShort: [String] {
+    [String(localized: "Mo", comment: "lundi, 2 lettres"), String(localized: "Tu"), String(localized: "We"),
+     String(localized: "Th"), String(localized: "Fr"), String(localized: "Sa"), String(localized: "Su")]
+}
+
+/// Heure pleine pour l'horloge du code : « 14:00 » en anglais, « 14h » en français.
+func hourLabel(_ h: Int) -> String { String(localized: "\(h):00") }
+
 struct HeaderBar: View {
     @Environment(\.glyph) private var t
     let snapshot: Snapshot
@@ -19,17 +28,17 @@ struct HeaderBar: View {
         HStack(alignment: .firstTextBaseline, spacing: 18) {
             HStack(spacing: 8) {
                 Text(snapshot.meta.repoName).font(.system(size: t.fontSize * 1.5, weight: .semibold, design: .monospaced)).foregroundStyle(t.ink)
-                Tag(snapshot.meta.head, color: t.accent, filled: true)
+                Tag(displayHead(snapshot.meta.head), color: t.accent, filled: true)
                 if let ab = h.aheadBehind {
                     Text("↑\(ab.ahead) ↓\(ab.behind)")
                         .font(t.smallFont).monospacedDigit()
                         .foregroundStyle(ab.ahead + ab.behind == 0 ? t.muted : t.accent)
-                        .help("\(ab.ahead) commit(s) à pousser, \(ab.behind) à tirer")
+                        .help("\(ab.ahead) commit(s) to push, \(ab.behind) to pull")
                 } else {
-                    Text("sans upstream").font(t.smallFont).foregroundStyle(t.faint)
+                    Text("no upstream").font(t.smallFont).foregroundStyle(t.faint)
                 }
                 if h.stashes > 0 {
-                    Text("\(h.stashes) stash\(h.stashes > 1 ? "es" : "")").font(t.smallFont).foregroundStyle(t.accent2)
+                    Text("\(h.stashes) stashes").font(t.smallFont).foregroundStyle(t.accent2)
                 }
             }
             Text(snapshot.meta.repoPath.replacingOccurrences(of: NSHomeDirectory(), with: "~"))
@@ -42,13 +51,13 @@ struct HeaderBar: View {
                     Text(detail.isEmpty ? stage : "\(stage) · \(detail)").font(t.smallFont).foregroundStyle(t.muted)
                 }
             case .failed(let msg):
-                Text("⚠ \(msg)").font(t.smallFont).foregroundStyle(.red).lineLimit(1)
+                Text(verbatim: "⚠ \(msg)").font(t.smallFont).foregroundStyle(.red).lineLimit(1)
             case .idle:
                 Text("snapshot \(Tabular.relative(snapshot.meta.builtAt))").font(t.smallFont).foregroundStyle(t.muted)
             }
             HStack(spacing: 4) {
                 Text("/").foregroundStyle(t.muted)
-                TextField("filtrer message, auteur, hash", text: $filter)
+                TextField("filter message, author, hash", text: $filter)
                     .textFieldStyle(.plain)
                     .focused($filterFocused)
                     .frame(width: t.cell.width * 30)
@@ -57,9 +66,9 @@ struct HeaderBar: View {
             .font(t.font)
             .padding(.horizontal, 6).padding(.vertical, 3)
             .overlay(RoundedRectangle(cornerRadius: 3).stroke(t.rule, style: StrokeStyle(lineWidth: 1, dash: [3, 3])))
-            Button("ouvrir…", action: onOpen).buttonStyle(.plain).font(t.font).foregroundStyle(t.accent)
+            Button("open…", action: onOpen).buttonStyle(.plain).font(t.font).foregroundStyle(t.accent)
                 .keyboardShortcut("o", modifiers: .command)
-            Button("cloner…", action: onClone).buttonStyle(.plain).font(t.font).foregroundStyle(t.accent)
+            Button("clone…", action: onClone).buttonStyle(.plain).font(t.font).foregroundStyle(t.accent)
                 .keyboardShortcut("o", modifiers: [.command, .shift])
         }
         .padding(.horizontal, 16).padding(.vertical, 10)
@@ -74,17 +83,18 @@ struct StatsRow: View {
     var body: some View {
         let h = snapshot.health
         HStack(alignment: .top, spacing: 0) {
-            Stat("commits", Tabular.int(snapshot.commits.count), note: analytics?.firstCommit.map { "depuis \(Tabular.shortDate($0))" })
+            Stat(String(localized: "commits"), Tabular.int(snapshot.commits.count), note: analytics?.firstCommit.map { String(localized: "since \(Tabular.shortDate($0))") })
             Spacer()
-            Stat("auteurs", Tabular.int(snapshot.authors.count), note: analytics.map { "\($0.authors.filter { $0.recent > 0 }.count) actifs · 90 j" })
+            Stat(String(localized: "authors"), Tabular.int(snapshot.authors.count), note: analytics.map { String(localized: "\($0.authors.filter { $0.recent > 0 }.count) active · 90 d") })
             Spacer()
-            Stat("branches", Tabular.int(h.localBranches), note: "\(h.remoteBranches) distantes · \(h.tags) tags")
+            Stat(String(localized: "branches"), Tabular.int(h.localBranches), note: String(localized: "\(h.remoteBranches) remote · \(h.tags) tags"))
             Spacer()
-            Stat("fichiers", Tabular.int(h.trackedFiles), note: Tabular.bytes(h.sizeBytes) + " d'objets")
+            Stat(String(localized: "files"), Tabular.int(h.trackedFiles), note: String(localized: "\(Tabular.bytes(h.sizeBytes)) of objects"))
             Spacer()
-            Stat("travail", "\(h.modified + h.staged)", note: "\(h.staged) indexés · \(h.untracked) non suivis")
+            Stat(String(localized: "uncommitted"), "\(h.modified + h.staged)", note: String(localized: "\(h.staged) staged · \(h.untracked) untracked"))
             Spacer()
-            Stat("série", analytics.map { "\($0.calendar.currentStreak) j" } ?? "–", note: analytics.map { "\(Tabular.int($0.calendar.total)) commits · 53 sem." })
+            Stat(String(localized: "streak"), analytics.map { String(localized: "\($0.calendar.currentStreak) d") } ?? "–",
+                 note: analytics.map { String(localized: "\(Tabular.int($0.calendar.total)) commits · 53 wk") })
         }
     }
 }
@@ -94,22 +104,22 @@ struct ActivityWidget: View {
     let cal: ActivityCalendar
 
     var body: some View {
-        Frame("activité · 53 semaines", trailing: "max \(cal.maxPerDay)/j") {
+        Frame(String(localized: "activity · 53 weeks"), trailing: String(localized: "max \(cal.maxPerDay)/d")) {
             GeometryReader { geo in
                 let labelW: CGFloat = 18
                 let gap: CGFloat = 1.5
                 let cell = max(3, floor((geo.size.width - labelW - 6 - gap * CGFloat(cal.weeks - 1)) / CGFloat(cal.weeks)))
                 HStack(alignment: .top, spacing: 6) {
                     VStack(alignment: .leading, spacing: gap) {
-                        ForEach(Array(["lu", "", "me", "", "ve", "", "di"].enumerated()), id: \.offset) { _, d in
-                            Text(d).font(.system(size: max(6, cell), design: .monospaced)).foregroundStyle(t.muted).frame(width: labelW, height: cell, alignment: .leading)
+                        ForEach(Array(weekdayShort.enumerated().map { $0.offset % 2 == 0 ? $0.element : "" }.enumerated()), id: \.offset) { _, d in
+                            Text(verbatim: d).font(.system(size: max(6, cell), design: .monospaced)).foregroundStyle(t.muted).frame(width: labelW, height: cell, alignment: .leading)
                         }
                     }
                     CellGrid(columns: cal.weeks, rows: 7, levels: cal.levels, cellSize: cell, gap: gap)
                 }
             }
             .frame(height: 7 * 6.5 + 8)
-            .accessibilityLabel("\(cal.total) commits sur 53 semaines, série actuelle \(cal.currentStreak) jours")
+            .accessibilityLabel("\(cal.total) commits over 53 weeks, current streak \(cal.currentStreak) days")
         }
     }
 }
@@ -121,14 +131,14 @@ struct AuthorsWidget: View {
     let total: Int
 
     var body: some View {
-        Frame("auteurs", trailing: "\(authors.count)") {
+        Frame(String(localized: "authors"), trailing: "\(authors.count)") {
             VStack(alignment: .leading, spacing: 3) {
                 if river.months.count > 1 {
                     StackedBars(series: river.series, colors: (0..<river.series.count).map { $0 == river.series.count - 1 ? t.faint : t.laneColor($0) }, height: 48)
                     HStack {
                         Text(river.months.first.map { Tabular.shortDate($0).prefix(7).description } ?? "").font(t.smallFont).foregroundStyle(t.muted)
                         Spacer()
-                        Text("commits / mois").font(t.smallFont).foregroundStyle(t.muted)
+                        Text("commits / month").font(t.smallFont).foregroundStyle(t.muted)
                         Spacer()
                         Text(river.months.last.map { Tabular.shortDate($0).prefix(7).description } ?? "").font(t.smallFont).foregroundStyle(t.muted)
                     }
@@ -140,12 +150,12 @@ struct AuthorsWidget: View {
                         Meter(a.share, width: 10, color: i < 5 ? t.laneColor(i) : t.muted)
                         Text(Tabular.percent(a.share)).foregroundStyle(t.muted).monospacedDigit()
                         Spacer(minLength: 2)
-                        Text(a.recent > 0 ? "\(a.recent) · 90 j" : Tabular.relative(a.last)).font(t.smallFont).foregroundStyle(t.muted).lineLimit(1)
+                        Text(a.recent > 0 ? String(localized: "\(a.recent) · 90 d") : Tabular.relative(a.last)).font(t.smallFont).foregroundStyle(t.muted).lineLimit(1)
                     }
                     .frame(height: t.cell.height)
                 }
                 if authors.count > 8 {
-                    Text("… et \(authors.count - 8) autres").font(t.smallFont).foregroundStyle(t.muted)
+                    Text("… and \(authors.count - 8) more").font(t.smallFont).foregroundStyle(t.muted)
                 }
             }
         }
@@ -157,9 +167,9 @@ struct HotFilesWidget: View {
     let files: [FileStat]
 
     var body: some View {
-        Frame("fichiers chauds · 90 jours", trailing: files.isEmpty ? "aucun changement" : "changements") {
+        Frame(String(localized: "hot files · 90 days"), trailing: files.isEmpty ? String(localized: "no changes") : String(localized: "changes")) {
             if files.isEmpty {
-                Text("rien n'a bougé depuis 90 jours").foregroundStyle(t.muted)
+                Text("nothing changed in 90 days").foregroundStyle(t.muted)
             } else {
                 let mx = Double(files.first?.changes ?? 1)
                 VStack(alignment: .leading, spacing: 3) {
@@ -182,9 +192,9 @@ struct DirectoriesWidget: View {
     let dirs: [DirectoryStat]
 
     var body: some View {
-        Frame("où le code vit · propriété", trailing: "90 jours") {
+        Frame(String(localized: "where the code lives · ownership"), trailing: String(localized: "90 days")) {
             if dirs.isEmpty {
-                Text("aucune activité récente").foregroundStyle(t.muted)
+                Text("no recent activity").foregroundStyle(t.muted)
             } else {
                 VStack(alignment: .leading, spacing: 3) {
                     ForEach(dirs.prefix(8)) { d in
@@ -194,7 +204,7 @@ struct DirectoriesWidget: View {
                             Text(Tabular.percent(d.share)).foregroundStyle(t.muted).monospacedDigit()
                             Spacer(minLength: 2)
                             if let owner = d.owner {
-                                Text("\(owner) \(Tabular.percent(d.ownerShare).trimmingCharacters(in: .whitespaces))").font(t.smallFont).foregroundStyle(t.muted).lineLimit(1)
+                                Text(verbatim: "\(owner) \(Tabular.percent(d.ownerShare).trimmingCharacters(in: .whitespaces))").font(t.smallFont).foregroundStyle(t.muted).lineLimit(1)
                             }
                         }
                     }
@@ -209,16 +219,16 @@ struct ClockWidget: View {
     let clock: CodeClock
 
     var body: some View {
-        Frame("horloge du code", trailing: clock.peak.map { "pic \(["lu", "ma", "me", "je", "ve", "sa", "di"][$0.day]) \($0.hour)h" }) {
+        Frame(String(localized: "code clock"), trailing: clock.peak.map { String(localized: "peak \(weekdayShort[$0.day]) \(hourLabel($0.hour))") }) {
             HStack(alignment: .top, spacing: 6) {
                 VStack(alignment: .leading, spacing: 2) {
-                    ForEach(["lu", "ma", "me", "je", "ve", "sa", "di"], id: \.self) { d in
-                        Text(d).font(t.smallFont).foregroundStyle(t.muted).frame(height: 9)
+                    ForEach(weekdayShort, id: \.self) { d in
+                        Text(verbatim: d).font(t.smallFont).foregroundStyle(t.muted).frame(height: 9)
                     }
                 }
                 VStack(alignment: .leading, spacing: 3) {
                     CellGrid(columns: 24, rows: 7, levels: clock.levels.map { Optional($0) }, cellSize: 9, gap: 2, color: t.accent2)
-                    HStack { Text("0h"); Spacer(); Text("6h"); Spacer(); Text("12h"); Spacer(); Text("18h"); Spacer(); Text("23h") }
+                    HStack { Text(verbatim: hourLabel(0)); Spacer(); Text(verbatim: hourLabel(6)); Spacer(); Text(verbatim: hourLabel(12)); Spacer(); Text(verbatim: hourLabel(18)); Spacer(); Text(verbatim: hourLabel(23)) }
                         .font(t.smallFont).foregroundStyle(t.muted).frame(width: 24 * 11 - 2)
                 }
             }
@@ -233,16 +243,16 @@ struct SinceVisitWidget: View {
     @Binding var selection: Int?
 
     var body: some View {
-        Frame("depuis ta dernière visite", trailing: since.lastVisit.map { Tabular.relative($0) } ?? "première visite") {
+        Frame(String(localized: "since your last visit"), trailing: since.lastVisit.map { Tabular.relative($0) } ?? String(localized: "first visit")) {
             if since.lastVisit == nil {
-                Text("bienvenue. la prochaine fois, ce cadre te dira ce qui a bougé.").foregroundStyle(t.muted)
+                Text("welcome. next time, this frame will show what changed.").foregroundStyle(t.muted)
             } else if since.commits == 0 {
-                Text("rien de nouveau. le dépôt n'a pas bougé.").foregroundStyle(t.muted)
+                Text("nothing new. the repository hasn't changed.").foregroundStyle(t.muted)
             } else {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 0) {
-                        Text("\(since.commits) commit\(since.commits > 1 ? "s" : "")").foregroundStyle(t.ink)
-                        Text(" de ").foregroundStyle(t.muted)
+                        Text("\(since.commits) commits").foregroundStyle(t.ink)
+                        Text(" by ").foregroundStyle(t.muted)
                         Text(since.authors.prefix(3).joined(separator: ", ") + (since.authors.count > 3 ? " +\(since.authors.count - 3)" : "")).foregroundStyle(t.accent).lineLimit(1)
                     }
                     ForEach(since.commitIndices.prefix(5), id: \.self) { i in
@@ -275,19 +285,19 @@ struct HealthWidget: View {
 
     var body: some View {
         let h = snapshot.health
-        Frame("santé du dépôt") {
+        Frame(String(localized: "repository health")) {
             VStack(alignment: .leading, spacing: 3) {
-                Leader("taille des objets", Tabular.bytes(h.sizeBytes))
-                Leader("objets libres", Tabular.int(h.looseObjects), emphasis: h.looseObjects > 5_000)
-                Leader("packs", Tabular.int(h.packs))
-                Leader("branches périmées · 180 j", Tabular.int(h.staleBranches), emphasis: h.staleBranches > 0)
+                Leader(String(localized: "object size"), Tabular.bytes(h.sizeBytes))
+                Leader(String(localized: "loose objects"), Tabular.int(h.looseObjects), emphasis: h.looseObjects > 5_000)
+                Leader(String(localized: "packs"), Tabular.int(h.packs))
+                Leader(String(localized: "stale branches · 180 d"), Tabular.int(h.staleBranches), emphasis: h.staleBranches > 0)
                 if !analytics.staleBranches.isEmpty {
                     Text(analytics.staleBranches.prefix(6).joined(separator: "  ")).font(t.smallFont).foregroundStyle(t.muted).lineLimit(2)
                 }
-                Leader("non fusionnées dans HEAD", Tabular.int(analytics.unmergedBranches.count))
+                Leader(String(localized: "not merged into HEAD"), Tabular.int(analytics.unmergedBranches.count))
                 if !analytics.largestFiles.isEmpty {
                     Rule()
-                    Text("plus gros fichiers suivis").font(t.smallFont).tracking(1).foregroundStyle(t.muted)
+                    Text("largest tracked files").font(t.smallFont).tracking(1).foregroundStyle(t.muted)
                     ForEach(analytics.largestFiles.prefix(5)) { f in
                         Leader(f.path, Tabular.bytes(f.size), emphasis: f.size > 5_000_000)
                     }
@@ -303,9 +313,9 @@ struct WorkingTreeWidget: View {
 
     var body: some View {
         let st = snapshot.status
-        Frame("arbre de travail", trailing: st.count == 0 ? "propre ✓" : "\(st.count) entrée\(st.count > 1 ? "s" : "")") {
+        Frame(String(localized: "working tree"), trailing: st.count == 0 ? String(localized: "clean ✓") : String(localized: "\(st.count) entries")) {
             if st.count == 0 {
-                Text("rien à valider, arbre propre.").foregroundStyle(t.muted)
+                Text("nothing to commit, working tree clean.").foregroundStyle(t.muted)
             } else {
                 VStack(alignment: .leading, spacing: 2) {
                     ForEach(0..<min(st.count, 10), id: \.self) { i in
@@ -315,7 +325,7 @@ struct WorkingTreeWidget: View {
                             Text(st.path(i)).foregroundStyle(t.ink).lineLimit(1).truncationMode(.middle)
                         }
                     }
-                    if st.count > 10 { Text("… \(st.count - 10) de plus").font(t.smallFont).foregroundStyle(t.muted) }
+                    if st.count > 10 { Text("… \(st.count - 10) more").font(t.smallFont).foregroundStyle(t.muted) }
                 }
             }
         }
@@ -342,12 +352,12 @@ struct CommitDetailWidget: View {
     var body: some View {
         let hash = snapshot.commits.fullHash(index)
         let files = model.commitFiles[hash]
-        Frame("commit", trailing: snapshot.commits.shortHash(index)) {
+        Frame(String(localized: "commit"), trailing: snapshot.commits.shortHash(index)) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(snapshot.message(index)).foregroundStyle(t.ink).lineLimit(3)
-                Leader("auteur", snapshot.authors.name(snapshot.commits.author(index)))
-                Leader("date", Tabular.dateTime(snapshot.commits.date(index)))
-                Leader("parents", "\(snapshot.commits.parentCount(index))")
+                Leader(String(localized: "author"), snapshot.authors.name(snapshot.commits.author(index)))
+                Leader(String(localized: "date"), Tabular.dateTime(snapshot.commits.date(index)))
+                Leader(String(localized: "parents"), "\(snapshot.commits.parentCount(index))")
                 Text(hash).font(t.smallFont).foregroundStyle(t.muted).textSelection(.enabled)
                 if !refs.isEmpty {
                     HStack(spacing: 4) { ForEach(refs.prefix(6), id: \.self) { Tag($0.name, color: $0.kind == .tag ? t.accent2 : t.accent, filled: $0.isHead) } }
@@ -356,7 +366,7 @@ struct CommitDetailWidget: View {
                 if let files {
                     let added = files.reduce(0) { $0 + max(0, $1.added) }, deleted = files.reduce(0) { $0 + max(0, $1.deleted) }
                     HStack(spacing: 6) {
-                        Text("\(files.count) fichier\(files.count > 1 ? "s" : "")").font(t.smallFont).tracking(1).foregroundStyle(t.muted)
+                        Text("\(files.count) files").font(t.smallFont).tracking(1).foregroundStyle(t.muted)
                         Spacer()
                         Text("+\(added)").font(t.smallFont).foregroundStyle(Color(red: 0.62, green: 0.78, blue: 0.48))
                         Text("−\(deleted)").font(t.smallFont).foregroundStyle(Color(red: 0.85, green: 0.52, blue: 0.56))
@@ -375,8 +385,8 @@ struct CommitDetailWidget: View {
                             }
                         }
                     }
-                    if files.count > 14 { Text("… \(files.count - 14) de plus").font(t.smallFont).foregroundStyle(t.muted) }
-                    if files.isEmpty { Text("aucun fichier (commit vide ou fusion sans changement)").foregroundStyle(t.muted) }
+                    if files.count > 14 { Text("… \(files.count - 14) more").font(t.smallFont).foregroundStyle(t.muted) }
+                    if files.isEmpty { Text("no files (empty commit or merge without changes)").foregroundStyle(t.muted) }
                 } else if let err = model.commitFilesError {
                     Text(err).font(t.smallFont).foregroundStyle(.red).lineLimit(2)
                 } else {
@@ -427,13 +437,13 @@ struct ReposWidget: View {
 
     var body: some View {
         let currentName = repos.first { $0.path == current }?.name
-        Frame(collapsed ? "▸ dépôts" : "▾ dépôts", trailing: discovering ? "recherche…" : "\(repos.count) · ⌘1…9 · ⌘[ ⌘]") {
+        Frame((collapsed ? "▸ " : "▾ ") + String(localized: "repositories"), trailing: discovering ? String(localized: "searching…") : "\(repos.count) · ⌘1…9 · ⌘[ ⌘]") {
             VStack(alignment: .leading, spacing: 1) {
                 if collapsed {
                     HStack(spacing: 6) {
                         Text(currentName ?? "—").foregroundStyle(t.accent).lineLimit(1)
                         Spacer()
-                        Text("\(repos.count) dépôts").font(t.smallFont).foregroundStyle(t.muted)
+                        Text("\(repos.count) repositories").font(t.smallFont).foregroundStyle(t.muted)
                     }
                 } else {
                     ScrollView(.vertical) {
@@ -442,9 +452,9 @@ struct ReposWidget: View {
                     .frame(maxHeight: t.cell.height * 12 + 12)
                     .scrollIndicators(.automatic)
                     if repos.isEmpty {
-                        Text("aucun dépôt connu").foregroundStyle(t.muted)
+                        Text("no known repositories").foregroundStyle(t.muted)
                     }
-                    Button("+ ouvrir un autre dépôt…", action: onOpen).buttonStyle(.plain).foregroundStyle(t.accent).padding(.top, 4)
+                    Button("+ open another repository…", action: onOpen).buttonStyle(.plain).foregroundStyle(t.accent).padding(.top, 4)
                 }
             }
         }
@@ -454,7 +464,7 @@ struct ReposWidget: View {
                 Color.clear.frame(width: 120, height: 26).contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel(collapsed ? "déplier les dépôts" : "replier les dépôts")
+            .accessibilityLabel(collapsed ? String(localized: "expand repositories") : String(localized: "collapse repositories"))
         }
     }
 
@@ -467,7 +477,7 @@ struct ReposWidget: View {
                             Text(r.name).foregroundStyle(isCurrent ? t.accent : t.ink).lineLimit(1).truncationMode(.middle)
                             Spacer(minLength: 4)
                             if let head = r.head {
-                                Text(head).font(t.smallFont).foregroundStyle(t.muted).lineLimit(1).truncationMode(.middle).frame(maxWidth: t.cell.width * 10, alignment: .trailing)
+                                Text(displayHead(head)).font(t.smallFont).foregroundStyle(t.muted).lineLimit(1).truncationMode(.middle).frame(maxWidth: t.cell.width * 10, alignment: .trailing)
                             }
                             Text(r.commits.map { Tabular.int($0) } ?? (r.hasSnapshot ? "" : "·")).font(t.smallFont).foregroundStyle(t.muted).monospacedDigit()
                                 .frame(width: t.cell.width * 6, alignment: .trailing)
@@ -478,15 +488,15 @@ struct ReposWidget: View {
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel("\(r.name), \(r.head ?? ""), \(r.commits.map { "\($0) commits" } ?? "")")
+                    .accessibilityLabel(Text(verbatim: "\(r.name), \(r.head.map(displayHead) ?? ""), \(r.commits.map { String(localized: "\($0) commits") } ?? "")"))
                     .help(r.path)
                     .contextMenu {
-                        Button("Ouvrir dans le Finder") { providers.openInFinder(r.path) }
-                        Button("Ouvrir dans le Terminal") { providers.openInTerminal(r.path) }
-                        ForEach(providers.editors) { e in Button("Ouvrir dans \(e.name)") { providers.openInEditor(r.path, e) } }
+                        Button("Open in Finder") { providers.openInFinder(r.path) }
+                        Button("Open in Terminal") { providers.openInTerminal(r.path) }
+                        ForEach(providers.editors) { e in Button("Open in \(e.name)") { providers.openInEditor(r.path, e) } }
                         Divider()
-                        Button("Copier le chemin") { NSPasteboard.general.clearContents(); NSPasteboard.general.setString(r.path, forType: .string) }
-                        Button("Retirer de la liste") { onForget(r.path) }
+                        Button("Copy Path") { NSPasteboard.general.clearContents(); NSPasteboard.general.setString(r.path, forType: .string) }
+                        Button("Remove from List") { onForget(r.path) }
                     }
                 }
     }

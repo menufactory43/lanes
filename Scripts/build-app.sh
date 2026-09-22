@@ -15,6 +15,8 @@ cp "$BIN" "$APP/Contents/MacOS/Lanes"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 if [[ ! -f Resources/AppIcon.icns ]]; then swift Scripts/make-icon.swift Resources/AppIcon.icns; fi
 cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
+# Localisations : en (langue de développement) et fr, lues dans Bundle.main.
+for lp in Resources/*.lproj; do cp -R "$lp" "$APP/Contents/Resources/"; done
 echo -n "APPL????" > "$APP/Contents/PkgInfo"
 strip -x "$APP/Contents/MacOS/Lanes" 2>/dev/null || true
 codesign --force --sign - --identifier app.lanes.dashboard "$APP" 2>&1 | grep -v "replacing existing signature" || true

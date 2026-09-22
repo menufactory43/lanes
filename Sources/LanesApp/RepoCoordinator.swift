@@ -120,7 +120,7 @@ final class RepoCoordinator {
         buildTask?.cancel()
         watcher?.stop(); watcher = nil
         model.errorMessage = nil
-        model.building = .building(stage: "localisation", detail: "")
+        model.building = .building(stage: ExtractStage.locate.localizedName, detail: "")
         Task.detached(priority: .userInitiated) {
             do {
                 let info = try RepoInfo.locate(path)
@@ -141,7 +141,7 @@ final class RepoCoordinator {
                 }
             } catch {
                 await MainActor.run {
-                    self.model.building = .failed("pas un dépôt git : \(path.replacingOccurrences(of: NSHomeDirectory(), with: "~"))")
+                    self.model.building = .failed(String(localized: "not a git repository: \(path.replacingOccurrences(of: NSHomeDirectory(), with: "~"))"))
                 }
             }
         }
@@ -151,7 +151,7 @@ final class RepoCoordinator {
         guard let info else {
             Preferences.forgetRecent(requested)
             if model.snapshot?.meta.repoPath == requested || model.snapshot == nil {
-                model.building = .failed("le dépôt \(requested.replacingOccurrences(of: NSHomeDirectory(), with: "~")) n'est plus accessible")
+                model.building = .failed(String(localized: "repository \(requested.replacingOccurrences(of: NSHomeDirectory(), with: "~")) is no longer accessible"))
             }
             return
         }
@@ -190,7 +190,7 @@ final class RepoCoordinator {
             let progress: @Sendable (ExtractProgress) -> Void = { p in
                 Task { @MainActor in
                     guard !Task.isCancelled else { return }
-                    self.model.building = .building(stage: p.stage.rawValue, detail: p.detail)
+                    self.model.building = .building(stage: p.stage.localizedName, detail: p.detail)
                 }
             }
             do {

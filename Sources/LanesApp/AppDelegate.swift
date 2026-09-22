@@ -19,8 +19,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             NSApp.appearance = NSAppearance(named: mode == "dark" ? .darkAqua : .aqua)
         }
         // 1. Quel dépôt ? Ligne de commande, sinon le dernier ouvert.
-        let args = CommandLine.arguments.dropFirst().filter { !$0.hasPrefix("-") }
-        let requested = args.first.map { ($0 as NSString).expandingTildeInPath } ?? Preferences.lastRepo
+        let requested = Self.repoArgument(CommandLine.arguments.dropFirst()).map { ($0 as NSString).expandingTildeInPath } ?? Preferences.lastRepo
 
         // 2. Snapshot mappé : c'est tout ce que la première frame contient.
         var hadSnapshot = false
@@ -116,27 +115,40 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         return true
     }
 
+    /// Premier argument qui désigne un dépôt. Les paires `-Clé valeur` du
+    /// domaine d'arguments (`-AppleLanguages '(fr)'`, `-NSDocumentRevisionsDebugMode YES`…)
+    /// sont sautées en entier : leur valeur n'est pas un chemin.
+    static func repoArgument(_ args: ArraySlice<String>) -> String? {
+        var it = args.makeIterator()
+        while let a = it.next() {
+            if a.hasPrefix("-psn_") { continue }
+            if a.hasPrefix("-") { _ = it.next(); continue }
+            return a
+        }
+        return nil
+    }
+
     // MARK: Menu
 
     private func buildMenu() {
         let main = NSMenu()
         let appItem = NSMenuItem(); main.addItem(appItem)
         let appMenu = NSMenu()
-        appMenu.addItem(withTitle: "À propos de Lanes", action: #selector(about), keyEquivalent: "")
+        appMenu.addItem(withTitle: String(localized: "About Lanes"), action: #selector(about), keyEquivalent: "")
         appMenu.addItem(.separator())
-        appMenu.addItem(withTitle: "Masquer Lanes", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
+        appMenu.addItem(withTitle: String(localized: "Hide Lanes"), action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
         appMenu.addItem(.separator())
-        appMenu.addItem(withTitle: "Quitter Lanes", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        appMenu.addItem(withTitle: String(localized: "Quit Lanes"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         appItem.submenu = appMenu
 
         let fileItem = NSMenuItem(); main.addItem(fileItem)
-        let file = NSMenu(title: "Fichier")
-        file.addItem(withTitle: "Ouvrir un dépôt…", action: #selector(openPanelAction), keyEquivalent: "o")
-        let cloneItem = NSMenuItem(title: "Cloner un dépôt…", action: #selector(cloneAction), keyEquivalent: "O")
+        let file = NSMenu(title: String(localized: "File"))
+        file.addItem(withTitle: String(localized: "Open Repository…"), action: #selector(openPanelAction), keyEquivalent: "o")
+        let cloneItem = NSMenuItem(title: String(localized: "Clone Repository…"), action: #selector(cloneAction), keyEquivalent: "O")
         cloneItem.keyEquivalentModifierMask = [.command, .shift]
         file.addItem(cloneItem)
-        let recentItem = NSMenuItem(title: "Dépôts récents", action: nil, keyEquivalent: "")
-        let recent = NSMenu(title: "Dépôts récents")
+        let recentItem = NSMenuItem(title: String(localized: "Recent Repositories"), action: nil, keyEquivalent: "")
+        let recent = NSMenu(title: String(localized: "Recent Repositories"))
         for path in Preferences.recents {
             let item = NSMenuItem(title: path.replacingOccurrences(of: NSHomeDirectory(), with: "~"), action: #selector(openRecent(_:)), keyEquivalent: "")
             item.representedObject = path
@@ -145,49 +157,49 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         recentItem.submenu = recent
         file.addItem(recentItem)
         file.addItem(.separator())
-        file.addItem(withTitle: "Dépôt suivant", action: #selector(nextRepo), keyEquivalent: "]")
-        file.addItem(withTitle: "Dépôt précédent", action: #selector(previousRepo), keyEquivalent: "[")
-        let goItem = NSMenuItem(title: "Aller au dépôt", action: nil, keyEquivalent: "")
-        let go = NSMenu(title: "Aller au dépôt")
+        file.addItem(withTitle: String(localized: "Next Repository"), action: #selector(nextRepo), keyEquivalent: "]")
+        file.addItem(withTitle: String(localized: "Previous Repository"), action: #selector(previousRepo), keyEquivalent: "[")
+        let goItem = NSMenuItem(title: String(localized: "Go to Repository"), action: nil, keyEquivalent: "")
+        let go = NSMenu(title: String(localized: "Go to Repository"))
         for i in 1...9 {
-            let item = NSMenuItem(title: "Dépôt \(i)", action: #selector(selectRepoNumber(_:)), keyEquivalent: "\(i)")
+            let item = NSMenuItem(title: String(localized: "Repository \(i)"), action: #selector(selectRepoNumber(_:)), keyEquivalent: "\(i)")
             item.tag = i - 1
             go.addItem(item)
         }
         goItem.submenu = go
         file.addItem(goItem)
-        file.addItem(withTitle: "Chercher les dépôts de ce Mac", action: #selector(rediscover), keyEquivalent: "")
+        file.addItem(withTitle: String(localized: "Find Repositories on This Mac"), action: #selector(rediscover), keyEquivalent: "")
         file.addItem(.separator())
-        file.addItem(withTitle: "Ouvrir dans le Finder", action: #selector(revealInFinder), keyEquivalent: "R")
-        file.addItem(withTitle: "Ouvrir dans le Terminal", action: #selector(openTerminal), keyEquivalent: "T")
+        file.addItem(withTitle: String(localized: "Open in Finder"), action: #selector(revealInFinder), keyEquivalent: "R")
+        file.addItem(withTitle: String(localized: "Open in Terminal"), action: #selector(openTerminal), keyEquivalent: "T")
         for (i, e) in model.providers.editors.enumerated() {
-            let item = NSMenuItem(title: "Ouvrir dans \(e.name)", action: #selector(openEditor(_:)), keyEquivalent: i == 0 ? "E" : "")
+            let item = NSMenuItem(title: String(localized: "Open in \(e.name)"), action: #selector(openEditor(_:)), keyEquivalent: i == 0 ? "E" : "")
             item.tag = i
             file.addItem(item)
         }
         file.addItem(.separator())
-        file.addItem(withTitle: "Reconstruire le snapshot", action: #selector(rebuild), keyEquivalent: "r")
+        file.addItem(withTitle: String(localized: "Rebuild Snapshot"), action: #selector(rebuild), keyEquivalent: "r")
         file.addItem(.separator())
-        file.addItem(withTitle: "Fermer", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
+        file.addItem(withTitle: String(localized: "Close"), action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
         fileItem.submenu = file
 
         let editItem = NSMenuItem(); main.addItem(editItem)
-        let edit = NSMenu(title: "Édition")
-        edit.addItem(withTitle: "Annuler", action: Selector(("undo:")), keyEquivalent: "z")
-        edit.addItem(withTitle: "Rétablir", action: Selector(("redo:")), keyEquivalent: "Z")
+        let edit = NSMenu(title: String(localized: "Edit"))
+        edit.addItem(withTitle: String(localized: "Undo"), action: Selector(("undo:")), keyEquivalent: "z")
+        edit.addItem(withTitle: String(localized: "Redo"), action: Selector(("redo:")), keyEquivalent: "Z")
         edit.addItem(.separator())
-        edit.addItem(withTitle: "Couper", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
-        edit.addItem(withTitle: "Copier", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
-        edit.addItem(withTitle: "Coller", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
-        edit.addItem(withTitle: "Tout sélectionner", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+        edit.addItem(withTitle: String(localized: "Cut"), action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        edit.addItem(withTitle: String(localized: "Copy"), action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+        edit.addItem(withTitle: String(localized: "Paste"), action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        edit.addItem(withTitle: String(localized: "Select All"), action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
         edit.addItem(.separator())
-        edit.addItem(withTitle: "Filtrer", action: #selector(focusFilter), keyEquivalent: "f")
+        edit.addItem(withTitle: String(localized: "Filter"), action: #selector(focusFilter), keyEquivalent: "f")
         editItem.submenu = edit
 
         let windowItem = NSMenuItem(); main.addItem(windowItem)
-        let windowMenu = NSMenu(title: "Fenêtre")
-        windowMenu.addItem(withTitle: "Réduire", action: #selector(NSWindow.performMiniaturize(_:)), keyEquivalent: "m")
-        windowMenu.addItem(withTitle: "Zoom", action: #selector(NSWindow.performZoom(_:)), keyEquivalent: "")
+        let windowMenu = NSMenu(title: String(localized: "Window"))
+        windowMenu.addItem(withTitle: String(localized: "Minimize"), action: #selector(NSWindow.performMiniaturize(_:)), keyEquivalent: "m")
+        windowMenu.addItem(withTitle: String(localized: "Zoom"), action: #selector(NSWindow.performZoom(_:)), keyEquivalent: "")
         windowItem.submenu = windowMenu
         NSApp.windowsMenu = windowMenu
         NSApp.mainMenu = main
@@ -197,8 +209,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let report = LaunchMetrics.report()
         NSApp.orderFrontStandardAboutPanel(options: [
             .applicationName: "Lanes",
-            .applicationVersion: "1.0",
-            .credits: NSAttributedString(string: "Tableau de bord Git en lecture seule.\nLancement :\n\(report)", attributes: [.font: NSFont.monospacedSystemFont(ofSize: 11, weight: .regular)]),
+            .credits: NSAttributedString(string: String(localized: "Read-only Git dashboard.\nLaunch:\n\(report)"), attributes: [.font: NSFont.monospacedSystemFont(ofSize: 11, weight: .regular)]),
         ])
     }
 
@@ -235,8 +246,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         panel.canChooseDirectories = true
         panel.canChooseFiles = false
         panel.allowsMultipleSelection = false
-        panel.message = "Choisis un dossier contenant un dépôt Git"
-        panel.prompt = "Ouvrir"
+        panel.message = String(localized: "Choose a folder containing a Git repository")
+        panel.prompt = String(localized: "Open")
         panel.beginSheetModal(for: window) { [weak self] resp in
             guard resp == .OK, let url = panel.url else { return }
             self?.coordinator.open(path: url.path)

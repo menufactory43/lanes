@@ -1,0 +1,165 @@
+/* Traduction française de l'interface. Les clés sont les chaînes anglaises du
+   code source (langue de développement : en). Les pluriels sont dans
+   Localizable.stringsdict. */
+
+/* Menus AppKit */
+"About Lanes" = "À propos de Lanes";
+"Hide Lanes" = "Masquer Lanes";
+"Quit Lanes" = "Quitter Lanes";
+"File" = "Fichier";
+"Open Repository…" = "Ouvrir un dépôt…";
+"Clone Repository…" = "Cloner un dépôt…";
+"Recent Repositories" = "Dépôts récents";
+"Next Repository" = "Dépôt suivant";
+"Previous Repository" = "Dépôt précédent";
+"Go to Repository" = "Aller au dépôt";
+"Repository %lld" = "Dépôt %lld";
+"Find Repositories on This Mac" = "Chercher les dépôts de ce Mac";
+"Open in Finder" = "Ouvrir dans le Finder";
+"Open in Terminal" = "Ouvrir dans le Terminal";
+"Open in %@" = "Ouvrir dans %@";
+"Rebuild Snapshot" = "Reconstruire le snapshot";
+"Close" = "Fermer";
+"Edit" = "Édition";
+"Undo" = "Annuler";
+"Redo" = "Rétablir";
+"Cut" = "Couper";
+"Copy" = "Copier";
+"Paste" = "Coller";
+"Select All" = "Tout sélectionner";
+"Filter" = "Filtrer";
+"Window" = "Fenêtre";
+"Minimize" = "Réduire";
+"Read-only Git dashboard.\nLaunch:\n%@" = "Tableau de bord Git en lecture seule.\nLancement :\n%@";
+"Choose a folder containing a Git repository" = "Choisis un dossier contenant un dépôt Git";
+"Open" = "Ouvrir";
+"Clone Here" = "Cloner ici";
+"Copy Path" = "Copier le chemin";
+"Remove from List" = "Retirer de la liste";
+
+/* En-tête et statistiques */
+"open…" = "ouvrir…";
+"clone…" = "cloner…";
+"no upstream" = "sans upstream";
+"%lld commit(s) to push, %lld to pull" = "%lld commit(s) à pousser, %lld à tirer";
+"filter message, author, hash" = "filtrer message, auteur, hash";
+"commits" = "commits";
+"since %@" = "depuis %@";
+"authors" = "auteurs";
+"%lld active · 90 d" = "%lld actifs · 90 j";
+"branches" = "branches";
+"%lld remote · %lld tags" = "%lld distantes · %lld tags";
+"files" = "fichiers";
+"%@ of objects" = "%@ d'objets";
+"uncommitted" = "travail";
+"%lld staged · %lld untracked" = "%lld indexés · %lld non suivis";
+"streak" = "série";
+"%lld d" = "%lld j";
+"%@ commits · 53 wk" = "%@ commits · 53 sem.";
+
+/* Cadres */
+"activity" = "activité";
+"activity · 53 weeks" = "activité · 53 semaines";
+"max %lld/d" = "max %lld/j";
+"%lld commits over 53 weeks, current streak %lld days" = "%lld commits sur 53 semaines, série actuelle %lld jours";
+"commits / month" = "commits / mois";
+"%lld · 90 d" = "%lld · 90 j";
+"… and %lld more" = "… et %lld autres";
+"hot files · 90 days" = "fichiers chauds · 90 jours";
+"no changes" = "aucun changement";
+"changes" = "changements";
+"nothing changed in 90 days" = "rien n'a bougé depuis 90 jours";
+"where the code lives · ownership" = "où le code vit · propriété";
+"90 days" = "90 jours";
+"no recent activity" = "aucune activité récente";
+"code clock" = "horloge du code";
+"peak %@ %@" = "pic %@ %@";
+"%lld:00" = "%lldh";
+"since your last visit" = "depuis ta dernière visite";
+"first visit" = "première visite";
+"welcome. next time, this frame will show what changed." = "bienvenue. la prochaine fois, ce cadre te dira ce qui a bougé.";
+"nothing new. the repository hasn't changed." = "rien de nouveau. le dépôt n'a pas bougé.";
+" by " = " de ";
+"repository health" = "santé du dépôt";
+"object size" = "taille des objets";
+"loose objects" = "objets libres";
+"stale branches · 180 d" = "branches périmées · 180 j";
+"not merged into HEAD" = "non fusionnées dans HEAD";
+"largest tracked files" = "plus gros fichiers suivis";
+"working tree" = "arbre de travail";
+"clean ✓" = "propre ✓";
+"nothing to commit, working tree clean." = "rien à valider, arbre propre.";
+"… %lld more" = "… %lld de plus";
+"author" = "auteur";
+"no files (empty commit or merge without changes)" = "aucun fichier (commit vide ou fusion sans changement)";
+"repositories" = "dépôts";
+"searching…" = "recherche…";
+"no known repositories" = "aucun dépôt connu";
+"+ open another repository…" = "+ ouvrir un autre dépôt…";
+"expand repositories" = "déplier les dépôts";
+"collapse repositories" = "replier les dépôts";
+"Commit graph, %lld rows" = "Graphe des commits, %lld lignes";
+"%@, by %@, %@" = "%@, par %@, %@";
+"%lld values, max %lld" = "%lld valeurs, maximum %lld";
+"(no commits)" = "(aucun commit)";
+"detached HEAD @ %@" = "HEAD détaché @ %@";
+
+/* Jours (lundi d'abord) */
+"Mo" = "lu";
+"Tu" = "ma";
+"We" = "me";
+"Th" = "je";
+"Fr" = "ve";
+"Sa" = "sa";
+"Su" = "di";
+
+/* Premier lancement, construction */
+"first time opening %@: building the snapshot" = "première ouverture de %@ : construction du snapshot";
+"first time opening this repository: building the snapshot" = "première ouverture de ce dépôt : construction du snapshot";
+"next time it will open instantly" = "les prochaines ouvertures seront instantanées";
+"git dashboard · read-only" = "tableau de bord git · lecture seule";
+"open a repository…  ⌘O" = "ouvrir un dépôt…  ⌘O";
+"clone…  ⌘⇧O" = "cloner…  ⌘⇧O";
+"open another repository…" = "ouvrir un autre dépôt…";
+"or drop a folder here, or pick a repository on the left" = "ou glisse un dossier ici, ou choisis un dépôt à gauche";
+"or drop a folder here" = "ou glisse un dossier ici";
+"not a git repository: %@" = "pas un dépôt git : %@";
+"repository %@ is no longer accessible" = "le dépôt %@ n'est plus accessible";
+"locating" = "localisation";
+"history" = "historique";
+"refs" = "références";
+"recent files" = "fichiers récents";
+"tree" = "arborescence";
+"working tree status" = "état de travail";
+"graph lanes" = "voies du graphe";
+"writing" = "écriture";
+"%lld refs" = "%lld références";
+"%lld files, %lld changes" = "%lld fichiers, %lld changements";
+"%lld tracked files" = "%lld fichiers suivis";
+"%lld modified, %lld staged, %lld untracked" = "%lld modifiés, %lld indexés, %lld non suivis";
+
+/* Feuille de clonage */
+"clone a repository" = "cloner un dépôt";
+"URL, owner/repo, or GitHub keywords" = "URL, owner/repo, ou mots-clés GitHub";
+"will clone" = "clonera";
+"into" = "dans";
+"choose…" = "choisir…";
+"cancel" = "annuler";
+"clone" = "cloner";
+"cloning…" = "clonage…";
+"starting…" = "démarrage…";
+"folder %@ already exists" = "le dossier %@ existe déjà";
+"clone failed (exit code %d)" = "échec du clonage (code %d)";
+"GitHub rate limit reached, try again in a minute" = "limite GitHub atteinte, réessaie dans une minute";
+
+/* Dates relatives et unités */
+"just now" = "à l'instant";
+"%lld min ago" = "il y a %lld min";
+"%lld h ago" = "il y a %lld h";
+"%lld d ago" = "il y a %lld j";
+"%lld mo ago" = "il y a %lld mois";
+"B" = "o";
+"KB" = "Ko";
+"MB" = "Mo";
+"GB" = "Go";
+"TB" = "To";

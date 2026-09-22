@@ -77,20 +77,23 @@ public enum Tabular {
         return f.string(from: NSNumber(value: n)) ?? "\(n)"
     }
     public static func bytes(_ b: UInt64) -> String {
-        let units = ["o", "Ko", "Mo", "Go", "To"]
+        let units = [String(localized: "B", comment: "Octets (unité)"), String(localized: "KB"), String(localized: "MB"),
+                     String(localized: "GB"), String(localized: "TB")]
         var v = Double(b); var i = 0
         while v >= 1024 && i < units.count - 1 { v /= 1024; i += 1 }
-        return i == 0 ? "\(Int(v)) o" : String(format: "%.1f %@", v, units[i])
+        return i == 0 ? "\(Int(v)) \(units[0])" : String(format: "%.1f %@", v, units[i])
     }
     public static func percent(_ f: Double) -> String { String(format: "%3.0f%%", f * 100) }
+    /// Durée écoulée, compacte. Les chaînes viennent de Localizable.strings
+    /// (Bundle.main), même depuis ce module bibliothèque.
     public static func relative(_ date: Date, now: Date = Date()) -> String {
         let s = now.timeIntervalSince(date)
-        if s < 60 { return "à l'instant" }
-        if s < 3600 { return "il y a \(Int(s / 60)) min" }
-        if s < 86_400 { return "il y a \(Int(s / 3600)) h" }
-        if s < 86_400 * 30 { return "il y a \(Int(s / 86_400)) j" }
-        if s < 86_400 * 365 { return "il y a \(Int(s / (86_400 * 30))) mois" }
-        return "il y a \(Int(s / (86_400 * 365))) an\(s >= 86_400 * 730 ? "s" : "")"
+        if s < 60 { return String(localized: "just now") }
+        if s < 3600 { return String(localized: "\(Int(s / 60)) min ago") }
+        if s < 86_400 { return String(localized: "\(Int(s / 3600)) h ago") }
+        if s < 86_400 * 30 { return String(localized: "\(Int(s / 86_400)) d ago") }
+        if s < 86_400 * 365 { return String(localized: "\(Int(s / (86_400 * 30))) mo ago") }
+        return String(localized: "\(Int(s / (86_400 * 365))) yr ago")
     }
     public static func shortDate(_ date: Date) -> String {
         let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"; return f.string(from: date)

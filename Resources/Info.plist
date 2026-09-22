@@ -2,7 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>CFBundleDevelopmentRegion</key><string>fr</string>
+	<key>CFBundleDevelopmentRegion</key><string>en</string>
+	<key>CFBundleLocalizations</key><array><string>en</string><string>fr</string></array>
 	<key>CFBundleDisplayName</key><string>Lanes</string>
 	<key>CFBundleExecutable</key><string>Lanes</string>
 	<key>CFBundleIconFile</key><string>AppIcon</string>
@@ -21,7 +22,7 @@
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>
-			<key>CFBundleTypeName</key><string>Dossier</string>
+			<key>CFBundleTypeName</key><string>Folder</string>
 			<key>CFBundleTypeRole</key><string>Viewer</string>
 			<key>LSHandlerRank</key><string>Alternate</string>
 			<key>LSItemContentTypes</key><array><string>public.folder</string></array>

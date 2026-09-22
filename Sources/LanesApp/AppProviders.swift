@@ -50,7 +50,7 @@ enum AppProviders {
                 let panel = NSOpenPanel()
                 panel.canChooseDirectories = true; panel.canChooseFiles = false; panel.canCreateDirectories = true
                 panel.directoryURL = current
-                panel.prompt = "Cloner ici"
+                panel.prompt = String(localized: "Clone Here")
                 guard let w = window() else { return nil }
                 let resp = await panel.beginSheetModal(for: w)
                 guard resp == .OK, let url = panel.url else { return nil }

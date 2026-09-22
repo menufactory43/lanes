@@ -21,7 +21,7 @@ public enum GitHubSearch {
         req.timeoutInterval = 8
         let (data, resp) = try await URLSession.shared.data(for: req)
         if let http = resp as? HTTPURLResponse, http.statusCode == 403 {
-            throw NSError(domain: "GitHubSearch", code: 403, userInfo: [NSLocalizedDescriptionKey: "limite GitHub atteinte, réessaie dans une minute"])
+            throw NSError(domain: "GitHubSearch", code: 403, userInfo: [NSLocalizedDescriptionKey: String(localized: "GitHub rate limit reached, try again in a minute")])
         }
         struct Response: Decodable { let items: [Item] }
         struct Item: Decodable {

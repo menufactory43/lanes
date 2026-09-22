@@ -3,14 +3,21 @@ import Snapshot
 import GraphLayout
 
 public enum ExtractStage: String, Sendable, CaseIterable {
-    case locate = "localisation"
-    case log = "historique"
-    case refs = "références"
-    case changes = "fichiers récents"
-    case tree = "arborescence"
-    case status = "état de travail"
-    case layout = "voies du graphe"
-    case write = "écriture"
+    case locate, log, refs, changes, tree, status, layout, write
+
+    /// Libellé affiché pendant la construction (Localizable.strings de l'app).
+    public var localizedName: String {
+        switch self {
+        case .locate: String(localized: "locating")
+        case .log: String(localized: "history")
+        case .refs: String(localized: "refs")
+        case .changes: String(localized: "recent files")
+        case .tree: String(localized: "tree")
+        case .status: String(localized: "working tree status")
+        case .layout: String(localized: "graph lanes")
+        case .write: String(localized: "writing")
+        }
+    }
 }
 
 public struct ExtractProgress: Sendable {
@@ -95,13 +102,14 @@ public struct Extractor: Sendable {
             indexByOid[hash] = commits.count
             commits.append(Commit(oid: Self.hexToBytes(hash), parents: parents, ts: ts, author: a, subject: subject))
         }
-        report(.log, "\(commits.count) commits")
+        report(.log, String(localized: "\(commits.count) commits"))
 
         // 2. Références --------------------------------------------------------
         report(.refs)
         var head = try git.string(["symbolic-ref", "-q", "--short", "HEAD"], allowFailure: true)
         let headOid = try git.string(["rev-parse", "-q", "--verify", "HEAD"], allowFailure: true)
-        if head.isEmpty { head = headOid.isEmpty ? "(aucun commit)" : "HEAD détaché @ \(headOid.prefix(8))" }
+        // Valeurs neutres écrites dans le snapshot ; le dashboard les traduit à l'affichage.
+        if head.isEmpty { head = headOid.isEmpty ? "(no commits)" : "detached HEAD @ \(headOid.prefix(8))" }
         let unmerged: Set<String> = Set(
             (try git.string(["branch", "--no-merged", "HEAD", "--format=%(refname)"], allowFailure: true))
                 .split(separator: "\n").map(String.init)
@@ -130,7 +138,7 @@ public struct Extractor: Sendable {
             }
             refs.append(Ref(name: short, kind: kind, flags: flags, oid: oid))
         }
-        report(.refs, "\(refs.count) références")
+        report(.refs, String(localized: "\(refs.count) refs"))
 
         // 3. Changements récents ------------------------------------------------
         report(.changes)
@@ -168,7 +176,7 @@ public struct Extractor: Sendable {
                 changes.append(Change(file: fi, author: author, ts: ts, commit: commitIdx))
             }
         }
-        report(.changes, "\(files.count) fichiers, \(changes.count) changements")
+        report(.changes, String(localized: "\(files.count) files, \(changes.count) changes"))
 
         // 4. Arborescence (tailles) --------------------------------------------
         report(.tree)
@@ -199,7 +207,7 @@ public struct Extractor: Sendable {
                 files.append(FileStat(path: path, changes: 0, lastTs: 0, authorCounts: [:], size: size))
             }
         }
-        report(.tree, "\(trackedFiles) fichiers suivis")
+        report(.tree, String(localized: "\(trackedFiles) tracked files"))
 
         // 5. État de travail ----------------------------------------------------
         report(.status)
@@ -231,7 +239,7 @@ public struct Extractor: Sendable {
             }
         }
         fieldsZ.removeAll()
-        report(.status, "\(modified) modifiés, \(staged) indexés, \(untracked) non suivis")
+        report(.status, String(localized: "\(modified) modified, \(staged) staged, \(untracked) untracked"))
 
         // 6. Santé -------------------------------------------------------------
         var sizeBytes: UInt64 = 0, loose = 0, packs = 0

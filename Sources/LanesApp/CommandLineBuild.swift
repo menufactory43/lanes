@@ -28,7 +28,7 @@ enum CommandLineBuild {
             let url = store.url(forRepo: repo.topLevel)
             FileHandle.standardError.write(Data("  localisation+empreinte \(Int(Date().timeIntervalSince(t0) * 1000)) ms\n".utf8))
             let n = try Extractor(repo: repo, progress: { p in
-                FileHandle.standardError.write(Data("  \(p.stage.rawValue) \(p.detail)  @\(Int(Date().timeIntervalSince(t0) * 1000)) ms\n".utf8))
+                FileHandle.standardError.write(Data("  \(p.stage.localizedName) \(p.detail)  @\(Int(Date().timeIntervalSince(t0) * 1000)) ms\n".utf8))
             }).build(to: url, fingerprint: fp)
             let dt = Date().timeIntervalSince(t0)
             let size = (try? FileManager.default.attributesOfItem(atPath: url.path)[.size] as? NSNumber)?.intValue ?? 0

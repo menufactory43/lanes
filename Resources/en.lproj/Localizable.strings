@@ -1,0 +1,3 @@
+/* L'anglais est la langue de développement : les clés du code sont le texte
+   affiché. Ce fichier existe pour que en.lproj soit une localisation du bundle ;
+   les pluriels anglais sont dans Localizable.stringsdict. */

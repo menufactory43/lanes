@@ -37,6 +37,8 @@ cp Resources/Info.plist "$APP/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" -c "Set :CFBundleVersion $BUILD_NUMBER" "$APP/Contents/Info.plist"
 [[ -f Resources/AppIcon.icns ]] || swift Scripts/make-icon.swift Resources/AppIcon.icns
 cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
+# Localisations : en (langue de développement) et fr, lues dans Bundle.main.
+for lp in Resources/*.lproj; do cp -R "$lp" "$APP/Contents/Resources/"; done
 echo -n "APPL????" > "$APP/Contents/PkgInfo"
 strip -x "$APP/Contents/MacOS/Lanes"
 otool -L "$APP/Contents/MacOS/Lanes" | grep -vE "/System/|/usr/lib/" | tail -n +2 | grep . && { echo "✗ dépendance hors système"; exit 1; } || true

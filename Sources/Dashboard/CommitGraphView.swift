@@ -57,7 +57,7 @@ struct CommitGraphView: View {
             }
             .onTapGesture { focused = true }
         }
-        .accessibilityLabel("Graphe des commits, \(count) lignes")
+        .accessibilityLabel("Commit graph, \(count) rows")
     }
 }
 
@@ -113,7 +113,7 @@ struct CommitRow: View {
         .clipped()
         .contentShape(Rectangle())
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(snapshot.message(index)), par \(snapshot.authors.name(snapshot.commits.author(index))), \(Tabular.relative(snapshot.commits.date(index)))")
+        .accessibilityLabel("\(snapshot.message(index)), by \(snapshot.authors.name(snapshot.commits.author(index))), \(Tabular.relative(snapshot.commits.date(index)))")
     }
 }
 
